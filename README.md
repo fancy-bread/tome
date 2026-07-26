@@ -1,0 +1,81 @@
+# Tome
+
+A generalist documentation-indexing MCP server for Claude Code (and any
+MCP-compatible agent tool). Point it at a URL, a local path, or a git repo;
+it crawls, chunks, embeds, and makes the content queryable — the equivalent
+of Cursor's `@Docs` indexing, but not tied to one editor.
+
+**Status: pre-implementation.** The architecture and project constitution
+are ratified; no server code exists yet.
+
+See [VISION.md](VISION.md) for the product point of view — who this is
+for and how ambiguous design calls get resolved.
+
+## What it does
+
+- **Sources** — index a URL (bounded crawl), a local directory of
+  Markdown/text/PDF, or a git repo.
+- **MCP server** exposing four tools:
+
+  | Tool | Description |
+  |------|-------------|
+  | `tome_search` | Query indexed content; returns ranked chunks with source metadata |
+  | `tome_fetch` | Retrieve a full chunk or document by ID |
+  | `tome_list_sources` | List all indexed sources and their status |
+  | `tome_add_source` | Index a new source (URL, path, or git repo) |
+
+  `tome_search` and `tome_fetch` are meant to be called autonomously by the
+  agent mid-task, the same way it reaches for `Read` or `Grep` — no slash
+  command required.
+
+- **Skill commands** for the explicitly human-driven actions:
+
+  | Command | Action |
+  |---------|--------|
+  | `/tome-add` | Index a new URL, path, or repo |
+  | `/tome-sources` | List what's currently indexed |
+  | `/tome-search` | Manually query the index (optional override) |
+
+- **Semantic search with lexical fallback** — vector search via
+  `sqlite-vec`, embeddings generated locally via Ollama by default, falling
+  back to SQLite FTS5 automatically if the embedding service is unavailable.
+- **Local-first** — everything lives in one SQLite file on your machine; no
+  account, API key, or network dependency required to install or use it.
+
+## How it works
+
+```
+tome-*.md (skill files)              ← /tome-search, /tome-add, /tome-sources
+        ↓ bundled in plugin.json alongside the MCP server
+Tome MCP Server (TypeScript, local daemon, stdio)
+  ├── Crawler (URL / local path / git repo → raw documents)
+  ├── Chunker (documents → overlapping text chunks)
+  ├── Embedder (chunks → vectors; Ollama default, graceful degrade to FTS5)
+  └── DocumentIndex (SQLite-backed store with vector + lexical search)
+```
+
+## Install
+
+Not yet published:
+
+```
+claude plugin install github://fancy-bread/tome
+```
+
+No separate daemon management or manual MCP registration — installing the
+plugin gives you the indexed-docs capability directly.
+
+## Contributing
+
+This project follows a spec-first ("ASDLC") workflow: every feature starts
+as `specs/[###-feature-name]/spec.md`, then `plan.md`, then `tasks.md`,
+governed by the project constitution at
+[`.specify/memory/constitution.md`](.specify/memory/constitution.md).
+
+See [AGENTS.md](AGENTS.md) for repository conventions and the core
+principles agents (human or AI) working on this codebase must follow. If
+you're using Claude Code specifically, also see [CLAUDE.md](CLAUDE.md).
+
+## License
+
+[MIT](LICENSE)
