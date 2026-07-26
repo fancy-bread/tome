@@ -11,6 +11,7 @@ const PAGES: Record<string, { status?: number; html: string }> = {
       <a href="/other/page">Other (different prefix)</a>
       <a href="http://example.invalid/external">External (different origin)</a>
       <a href="/docs/broken">Broken</a>
+      <a href="http://[::1">Malformed href</a>
     </body></html>`,
   },
   '/docs/page-a': { html: `<html><body><h1>Page A</h1><p>Content A</p></body></html>` },
@@ -70,6 +71,19 @@ describe('DefaultCrawler — URL source (User Story 1)', () => {
     expect(uris.some((u) => u.includes('example.invalid'))).toBe(false);
   });
 
+  it('ignores a malformed href instead of throwing', async () => {
+    // The home page fixture includes an unparseable href
+    // ("http://[::1"); the crawl must still complete normally.
+    const result = await new DefaultCrawler().crawl({
+      type: 'url',
+      origin: `${baseUrl}/docs/`,
+      sourceId: 'source-1',
+    });
+
+    expect(result.error).toBeNull();
+    expect(result.documents.length).toBeGreaterThan(0);
+  });
+
   it('stops at the configured bound and returns Documents already fetched, rather than failing (SC-002)', async () => {
     const result = await new DefaultCrawler().crawl({
       type: 'url',
@@ -97,6 +111,17 @@ describe('DefaultCrawler — URL source (User Story 1)', () => {
     expect(result.error).toBeNull();
     expect(result.documents).toHaveLength(1);
     expect(result.documents[0].document.uri).toBe(`${baseUrl}/docs/`);
+  });
+
+  it('reports a clear error for an origin that is not a parseable URL at all', async () => {
+    const result = await new DefaultCrawler().crawl({
+      type: 'url',
+      origin: 'not a url',
+      sourceId: 'source-1',
+    });
+
+    expect(result.documents).toEqual([]);
+    expect(result.error).not.toBeNull();
   });
 
   it('returns an error and zero Documents when the starting URL itself cannot be fetched (FR-008)', async () => {

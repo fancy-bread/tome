@@ -76,6 +76,20 @@ describe('DefaultCrawler — git source (User Story 3)', () => {
     expect(result.error).not.toBeNull();
   });
 
+  it('reports a clear error when a plain-path origin (no clone attempted) does not exist', async () => {
+    // Not URL-shaped, so no clone is attempted — this exercises the
+    // "read an existing working tree" failure path specifically, as
+    // opposed to the "clone failed" path above.
+    const result = await new DefaultCrawler().crawl({
+      type: 'git',
+      origin: `${repoDir}-does-not-exist`,
+      sourceId: 'source-1',
+    });
+
+    expect(result.documents).toEqual([]);
+    expect(result.error).not.toBeNull();
+  });
+
   it('skips a single corrupt file in the working tree and still returns the rest (SC-005)', async () => {
     const result = await new DefaultCrawler().crawl({ type: 'git', origin: repoDir, sourceId: 'source-1' });
 
