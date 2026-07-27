@@ -12,19 +12,15 @@
 // storage-leaking concept like "seed" (FR-011).
 
 import { describe, expect, it } from 'vitest';
-import type { DocumentIndex } from '../../src/core/document-index.js';
 import { NotFoundError } from '../../src/core/document-index.js';
 import type { Embedder } from '../../src/core/embedder.js';
-import type { Chunk, Document, Source } from '../../src/core/types.js';
+import type {
+  DocumentIndexTestSeed,
+  TestableDocumentIndex,
+} from '../../src/core/testable-document-index.js';
 import { FakeEmbedder } from './in-memory-document-index.js';
 
-export interface DocumentIndexTestSeed {
-  seedSource(overrides?: Partial<Source>): Source;
-  seedDocument(sourceId: string, overrides?: Partial<Document>): Document;
-  seedChunk(documentId: string, overrides?: Partial<Chunk>): Chunk;
-}
-
-export type TestableDocumentIndex = DocumentIndex & DocumentIndexTestSeed;
+export type { DocumentIndexTestSeed, TestableDocumentIndex };
 
 export function runDocumentIndexContractTests(
   makeIndex: (embedder: Embedder) => TestableDocumentIndex,

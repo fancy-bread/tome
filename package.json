@@ -12,12 +12,15 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "better-sqlite3": "^13.0.1",
     "cheerio": "^1.2.0",
     "pdf-parse": "^2.4.5",
     "simple-git": "^3.36.0",
+    "sqlite-vec": "^0.1.9",
     "turndown": "^7.2.4"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^24.0.0",
     "@types/pdf-parse": "^1.1.5",
     "@types/turndown": "^5.0.6",
