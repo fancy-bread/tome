@@ -25,9 +25,19 @@ import { sanitizeFtsQuery } from './fts-query.js';
 import { decodeEmbedding, encodeEmbedding } from './vector-codec.js';
 import type { TestableDocumentIndex } from '../core/testable-document-index.js';
 
+const DEFAULT_RECONCILIATION_INTERVAL_MS = 30_000;
+
 export interface SqliteDocumentIndexOptions {
   dbPath: string;
   embedder: Embedder;
+  /**
+   * How often the background reconciliation pass re-scans for chunks
+   * missing an embedding (FR-005). A test seam, not user-facing
+   * configuration (Constitution Principle V) — production always uses
+   * the default; tests pass a small value to observe a recurring pass
+   * quickly.
+   */
+  reconciliationIntervalMs?: number;
 }
 
 interface SourceRow {
@@ -87,15 +97,63 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
   private crawler = new DefaultCrawler();
   private chunker = new DefaultChunker();
   private inFlightJobs = new Map<string, Promise<void>>();
+  private reconciling = false;
+  private reconciliationTimer: NodeJS.Timeout;
 
   constructor(options: SqliteDocumentIndexOptions) {
     this.db = new Database(options.dbPath);
     applySchema(this.db);
     this.embedder = options.embedder;
+
+    const intervalMs = options.reconciliationIntervalMs ?? DEFAULT_RECONCILIATION_INTERVAL_MS;
+    void this.reconcileNullEmbeddings();
+    this.reconciliationTimer = setInterval(() => void this.reconcileNullEmbeddings(), intervalMs);
   }
 
   close(): void {
+    clearInterval(this.reconciliationTimer);
     this.db.close();
+  }
+
+  /**
+   * Finds every chunk with no matching `chunk_vectors` row (the same
+   * "no vector row = null embedding" rule chunkFromRow already reads by)
+   * and re-attempts embedding for each. Guarded by `reconciling` so an
+   * overlapping timer tick is a no-op rather than a concurrent second
+   * pass (FR-010) — skip, don't queue. Never throws: a failed
+   * re-attempt just leaves the chunk null and eligible for the next
+   * pass (FR-008).
+   */
+  private async reconcileNullEmbeddings(): Promise<void> {
+    if (this.reconciling) return;
+    this.reconciling = true;
+    try {
+      const rows = this.db
+        .prepare(
+          `SELECT chunks.rowid as rowid, chunks.id as id, chunks.text as text
+           FROM chunks
+           LEFT JOIN chunk_vectors ON chunk_vectors.rowid = chunks.rowid
+           WHERE chunk_vectors.rowid IS NULL`,
+        )
+        .all() as Array<{ rowid: number; id: string; text: string }>;
+
+      for (const row of rows) {
+        const embedding = await this.embedder.embed(row.text);
+        if (embedding) {
+          this.db
+            .prepare('INSERT INTO chunk_vectors(rowid, embedding) VALUES (?, ?)')
+            .run(BigInt(row.rowid), encodeEmbedding(embedding));
+        }
+      }
+    } catch {
+      // The connection may already be closed (e.g. close() was called
+      // while a slow embed() call from this pass was still in flight).
+      // Nothing meaningful to do at that point, but this must not become
+      // an unhandled rejection on a promise nothing awaits — the same
+      // reasoning as runIndexingJob's own closed-connection guard.
+    } finally {
+      this.reconciling = false;
+    }
   }
 
   // --- Row/entity lookups, shared by seed methods, orchestration, fetch, and search ---
@@ -316,6 +374,7 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
             );
           this.deleteChunksForDocument(existing.id);
           for (const chunk of this.chunker.chunk(existing.id, crawled.text)) {
+            chunk.embedding = await this.embedder.embed(chunk.text);
             this.insertChunk(chunk);
           }
         } else {
@@ -333,6 +392,7 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
               crawled.document.fetchedAt,
             );
           for (const chunk of this.chunker.chunk(crawled.document.id, crawled.text)) {
+            chunk.embedding = await this.embedder.embed(chunk.text);
             this.insertChunk(chunk);
           }
         }

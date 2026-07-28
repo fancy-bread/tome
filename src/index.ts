@@ -9,7 +9,7 @@ import { mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import type { Embedder } from './core/embedder.js';
+import { OllamaEmbedder } from './embedding/ollama-embedder.js';
 import { createTomeServer } from './mcp/server.js';
 import { SqliteDocumentIndex } from './storage/sqlite-document-index.js';
 
@@ -26,22 +26,11 @@ export function resolveDbPath(env: NodeJS.ProcessEnv): string {
   return join(dataDir, 'index.db');
 }
 
-/**
- * Always reports unavailable. Real embeddings are milestone 005's job
- * (OllamaEmbedder); this is a one-line stand-in, not a preview of that
- * module's eventual shape.
- */
-class NoOpEmbedder implements Embedder {
-  async embed(): Promise<number[] | null> {
-    return null;
-  }
-}
-
 async function main(): Promise<void> {
   const dbPath = resolveDbPath(process.env);
   await mkdir(dirname(dbPath), { recursive: true });
 
-  const index = new SqliteDocumentIndex({ dbPath, embedder: new NoOpEmbedder() });
+  const index = new SqliteDocumentIndex({ dbPath, embedder: new OllamaEmbedder() });
   const server = createTomeServer(index);
   const transport = new StdioServerTransport();
   await server.connect(transport);
