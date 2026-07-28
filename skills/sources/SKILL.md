@@ -1,12 +1,12 @@
 ---
-name: tome-sources
+name: sources
 description: List every source Tome has indexed and its current status.
 disable-model-invocation: true
 ---
 
 Checking indexing status is a human call — do not invoke this on your
 own initiative; only act when the user has explicitly run
-`/tome-sources`.
+`/tome:sources`.
 
 Call the `tome_list_sources` MCP tool and present every source's type,
 origin, status, and last-indexed time to the user in a readable list.

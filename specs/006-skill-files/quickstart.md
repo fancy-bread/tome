@@ -36,7 +36,7 @@ npm test
   `tome_list_sources`, `tome_search` respectively) and contains the
   `$ARGUMENTS` placeholder.
 - **FR-006/FR-007** (SC-004 continued) — `skill-files.test.ts`:
-  `tome-add` and `tome-search`'s bodies instruct the agent to ask the
+  `add` and `search`'s bodies instruct the agent to ask the
   user for clarification on a missing/malformed argument, rather than
   guessing.
 - **FR-009** — `skill-files.test.ts`: all three bodies instruct the
@@ -44,7 +44,7 @@ npm test
 
 Content/structure checks are the ceiling of what an automated test can
 prove here — whether the agent actually *behaves* as instructed when a
-real user types `/tome-add` is a live-agent behavior, not something
+real user types `/tome:add` is a live-agent behavior, not something
 `vitest` executes (the same limitation milestone 004 accepted for its
 tool-description content assertions).
 
@@ -61,14 +61,14 @@ Inside that session:
 
 ```
 /reload-plugins
-/tome-add path /path/to/some/local/docs
-/tome-sources
-/tome-search some query relevant to what you just added
+/tome:add path /path/to/some/local/docs
+/tome:sources
+/tome:search some query relevant to what you just added
 ```
 
-Expected: `/tome-add` reports back an identifier and status;
-`/tome-sources` lists it; `/tome-search` returns ranked results once
-indexing finishes. Try `/tome-add` and `/tome-search` with no arguments
+Expected: `/tome:add` reports back an identifier and status;
+`/tome:sources` lists it; `/tome:search` returns ranked results once
+indexing finishes. Try `/tome:add` and `/tome:search` with no arguments
 too — both should prompt for what's missing rather than erroring or
 guessing.
 

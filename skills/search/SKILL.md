@@ -1,5 +1,5 @@
 ---
-name: tome-search
+name: search
 description: Manually query Tome's indexed documentation.
 argument-hint: <query>
 disable-model-invocation: true
@@ -15,7 +15,7 @@ This is an explicit, on-demand lookup a user asked for by name — do not
 invoke this on your own initiative. It is not the primary way indexed
 content gets used: you should already be calling the `tome_search` MCP
 tool directly and proactively, mid-task, without waiting for this
-command. Only act here when the user has explicitly run `/tome-search`.
+command. Only act here when the user has explicitly run `/tome:search`.
 
 Treat `$ARGUMENTS` as the search query. If it's empty or just
 whitespace, do not run an empty search — ask the user what they'd like

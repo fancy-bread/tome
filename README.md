@@ -34,9 +34,9 @@ for and how ambiguous design calls get resolved.
 
   | Command | Action |
   |---------|--------|
-  | `/tome-add` | Index a new URL, path, or repo |
-  | `/tome-sources` | List what's currently indexed |
-  | `/tome-search` | Manually query the index (optional override) |
+  | `/tome:add` | Index a new URL, path, or repo |
+  | `/tome:sources` | List what's currently indexed |
+  | `/tome:search` | Manually query the index (optional override) |
 
 - **Semantic search with lexical fallback** — vector search via
   `sqlite-vec`, embeddings generated locally via Ollama by default, falling
@@ -47,7 +47,7 @@ for and how ambiguous design calls get resolved.
 ## How it works
 
 ```
-tome-*.md (skill files)              ← /tome-search, /tome-add, /tome-sources
+tome-*.md (skill files)              ← /tome:search, /tome:add, /tome:sources
         ↓ bundled in plugin.json alongside the MCP server
 Tome MCP Server (TypeScript, local daemon, stdio)
   ├── Crawler (URL / local path / git repo → raw documents)

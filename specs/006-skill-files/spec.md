@@ -8,7 +8,7 @@
 
 ### User Story 1 — Explicitly Add a Source via a Slash Command (Priority: P1)
 
-A user types `/tome-add` with a source type and origin (a URL, local
+A user types `/tome:add` with a source type and origin (a URL, local
 path, or git repo). Without further back-and-forth, the source gets
 added — the same outcome as calling `tome_add_source` directly, but
 reachable by name instead of relying on the agent to reach for the MCP
@@ -20,16 +20,16 @@ indexed. Without this command, a user has no direct way to trigger
 indexing; they'd have to hope the agent infers the intent from
 conversation.
 
-**Independent Test**: Type `/tome-add` with a valid type and origin;
+**Independent Test**: Type `/tome:add` with a valid type and origin;
 confirm the source gets added and its id/status is reported back,
 matching what a direct `tome_add_source` call would produce.
 
 **Acceptance Scenarios**:
 
-1. **Given** a valid source type and origin, **When** `/tome-add` is
+1. **Given** a valid source type and origin, **When** `/tome:add` is
    invoked with them, **Then** the source is added and its identifier
    and status are reported to the user.
-2. **Given** `/tome-add` is invoked with a missing or malformed argument,
+2. **Given** `/tome:add` is invoked with a missing or malformed argument,
    **When** the command runs, **Then** the user is prompted for the
    missing information rather than the command guessing or failing
    silently.
@@ -38,7 +38,7 @@ matching what a direct `tome_add_source` call would produce.
 
 ### User Story 2 — Check What's Indexed via a Slash Command (Priority: P2)
 
-A user types `/tome-sources` and sees every source that's been added,
+A user types `/tome:sources` and sees every source that's been added,
 along with its current status (pending, indexing, ready, or error) and
 when it was last indexed.
 
@@ -47,14 +47,14 @@ urgent than adding a source in the first place — there's nothing to
 check status on until at least one source exists.
 
 **Independent Test**: Add two sources in different states, invoke
-`/tome-sources`, and confirm both appear with accurate, current status.
+`/tome:sources`, and confirm both appear with accurate, current status.
 
 **Acceptance Scenarios**:
 
 1. **Given** one or more sources have been added, **When**
-   `/tome-sources` is invoked, **Then** every source's current type,
+   `/tome:sources` is invoked, **Then** every source's current type,
    origin, status, and last-indexed time is shown.
-2. **Given** no sources have been added yet, **When** `/tome-sources` is
+2. **Given** no sources have been added yet, **When** `/tome:sources` is
    invoked, **Then** the user is told nothing is indexed yet, not shown
    an error.
 
@@ -62,7 +62,7 @@ check status on until at least one source exists.
 
 ### User Story 3 — Manually Query the Index via a Slash Command (Priority: P3)
 
-A user types `/tome-search` with a query and sees ranked results —
+A user types `/tome:search` with a query and sees ranked results —
 useful when a user wants to look something up directly rather than wait
 for the agent to decide to search on its own.
 
@@ -72,14 +72,14 @@ unprompted mid-task (milestone 004's whole point) — this command exists
 for the cases where a human wants that same lookup on demand, which is a
 real but secondary need.
 
-**Independent Test**: Add and index a source, invoke `/tome-search` with
+**Independent Test**: Add and index a source, invoke `/tome:search` with
 a query matching its content, and confirm ranked results are shown.
 
 **Acceptance Scenarios**:
 
-1. **Given** indexed content relevant to a query, **When** `/tome-search`
+1. **Given** indexed content relevant to a query, **When** `/tome:search`
    is invoked with it, **Then** ranked results are shown to the user.
-2. **Given** `/tome-search` is invoked with no query, **When** the
+2. **Given** `/tome:search` is invoked with no query, **When** the
    command runs, **Then** the user is prompted for one rather than an
    empty search being run.
 
@@ -91,7 +91,7 @@ a query matching its content, and confirm ranked results are shown.
   `tome_add_source` returns an error)? The failure is surfaced to the
   user in a readable way, not as a raw crash or a silently swallowed
   failure.
-- What happens when `/tome-search` matches nothing? The user is told
+- What happens when `/tome:search` matches nothing? The user is told
   there are no results, not shown an error.
 - What happens when a user provides extra or oddly-formatted input to
   any of the three commands? The command interprets what it reasonably
@@ -103,24 +103,24 @@ a query matching its content, and confirm ranked results are shown.
 ### Functional Requirements
 
 - **FR-001**: A skill command MUST exist for each of adding a source,
-  listing sources, and searching — reachable as `/tome-add`,
-  `/tome-sources`, and `/tome-search` respectively.
-- **FR-002**: `/tome-add` MUST accept a source type and origin and result
+  listing sources, and searching — reachable as `/tome:add`,
+  `/tome:sources`, and `/tome:search` respectively.
+- **FR-002**: `/tome:add` MUST accept a source type and origin and result
   in that source being added through the existing `tome_add_source`
   capability, with the resulting identifier and status reported back to
   the user.
-- **FR-003**: `/tome-sources` MUST result in every currently-added
+- **FR-003**: `/tome:sources` MUST result in every currently-added
   source's type, origin, status, and last-indexed time being shown to
   the user, through the existing `tome_list_sources` capability.
-- **FR-004**: `/tome-search` MUST accept a query and result in ranked
+- **FR-004**: `/tome:search` MUST accept a query and result in ranked
   results being shown to the user, through the existing `tome_search`
   capability.
 - **FR-005**: Each of the three commands MUST be independently
   discoverable and invocable by name, without requiring the other two.
-- **FR-006**: `/tome-add` invoked without a usable type or origin MUST
+- **FR-006**: `/tome:add` invoked without a usable type or origin MUST
   prompt the user for the missing information rather than guessing or
   silently failing.
-- **FR-007**: `/tome-search` invoked without a usable query MUST prompt
+- **FR-007**: `/tome:search` invoked without a usable query MUST prompt
   the user for one rather than running an empty search.
 - **FR-008**: None of the three commands may duplicate or bypass logic
   already provided by the milestone 004 MCP tools (e.g. independent
@@ -138,12 +138,12 @@ a query matching its content, and confirm ranked results are shown.
 
 ## Success Criteria
 
-- **SC-001**: A user can add a source by name (`/tome-add`) without
+- **SC-001**: A user can add a source by name (`/tome:add`) without
   needing to know the underlying MCP tool's name or argument shape.
-- **SC-002**: A user can check what's indexed (`/tome-sources`) and see
+- **SC-002**: A user can check what's indexed (`/tome:sources`) and see
   accurate, current status for every source, without needing to inspect
   anything beyond the command's own output.
-- **SC-003**: A user can manually query the index (`/tome-search`) and
+- **SC-003**: A user can manually query the index (`/tome:search`) and
   get ranked results produced by the same `tome_search` capability the
   agent calls on its own — no separate or reduced ranking logic behind
   the manual command.
@@ -163,7 +163,7 @@ a query matching its content, and confirm ranked results are shown.
   exist and work correctly during development, ahead of that packaging
   step.
 - Real local embedding (milestone 005) requires no special handling
-  here — `/tome-search` and `/tome-add` behave correctly regardless of
+  here — `/tome:search` and `/tome:add` behave correctly regardless of
   whether semantic ranking is currently available, the same
   graceful-degradation guarantee the underlying tools already provide.
 - The precise file format and location a slash-command skill must use to

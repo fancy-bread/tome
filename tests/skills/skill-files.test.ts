@@ -4,11 +4,11 @@ import { parseSkillFile } from './parse-skill-file.js';
 
 const SKILLS_DIR = join(import.meta.dirname, '..', '..', 'skills');
 
-describe('skills/tome-add/SKILL.md', () => {
-  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'tome-add', 'SKILL.md'));
+describe('skills/add/SKILL.md', () => {
+  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'add', 'SKILL.md'));
 
   it('has correct frontmatter', () => {
-    expect(frontmatter.name).toBe('tome-add');
+    expect(frontmatter.name).toBe('add');
     expect(frontmatter.description).toBeTruthy();
     expect(frontmatter['disable-model-invocation']).toBe('true');
   });
@@ -27,11 +27,11 @@ describe('skills/tome-add/SKILL.md', () => {
   });
 });
 
-describe('skills/tome-sources/SKILL.md', () => {
-  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'tome-sources', 'SKILL.md'));
+describe('skills/sources/SKILL.md', () => {
+  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'sources', 'SKILL.md'));
 
   it('has correct frontmatter', () => {
-    expect(frontmatter.name).toBe('tome-sources');
+    expect(frontmatter.name).toBe('sources');
     expect(frontmatter.description).toBeTruthy();
     expect(frontmatter['disable-model-invocation']).toBe('true');
   });
@@ -50,11 +50,11 @@ describe('skills/tome-sources/SKILL.md', () => {
   });
 });
 
-describe('skills/tome-search/SKILL.md', () => {
-  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'tome-search', 'SKILL.md'));
+describe('skills/search/SKILL.md', () => {
+  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'search', 'SKILL.md'));
 
   it('has correct frontmatter', () => {
-    expect(frontmatter.name).toBe('tome-search');
+    expect(frontmatter.name).toBe('search');
     expect(frontmatter.description).toBeTruthy();
     expect(frontmatter['disable-model-invocation']).toBe('true');
   });
