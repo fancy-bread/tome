@@ -16,13 +16,13 @@ import { SqliteDocumentIndex } from './storage/sqlite-document-index.js';
 const DEFAULT_DATA_DIR = join(homedir(), '.claude', 'plugins', 'tome');
 
 /**
- * Resolves the SQLite file path: `CLAUDE_PLUGIN_DATA_DIR/index.db` when
- * the plugin harness has set that variable (arriving in milestone 007),
- * else a fixed default so this daemon is runnable standalone before the
- * harness exists (per spec.md's Assumptions).
+ * Resolves the SQLite file path: `CLAUDE_PLUGIN_DATA/index.db` when the
+ * plugin harness has set that variable (milestone 007's `.mcp.json`
+ * forwards it), else a fixed default so this daemon is runnable
+ * standalone without the harness (per spec.md's Assumptions).
  */
 export function resolveDbPath(env: NodeJS.ProcessEnv): string {
-  const dataDir = env.CLAUDE_PLUGIN_DATA_DIR ?? DEFAULT_DATA_DIR;
+  const dataDir = env.CLAUDE_PLUGIN_DATA ?? DEFAULT_DATA_DIR;
   return join(dataDir, 'index.db');
 }
 

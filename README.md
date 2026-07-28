@@ -5,10 +5,9 @@ MCP-compatible agent tool). Point it at a URL, a local path, or a git repo;
 it crawls, chunks, embeds, and makes the content queryable — the equivalent
 of Cursor's `@Docs` indexing, but not tied to one editor.
 
-**Status: in progress.** Core interfaces, the ingestion pipeline, the
-SQLite-backed index, the MCP server, and local embedding are implemented;
-the human-facing skill commands and Claude Code plugin packaging are not
-yet built.
+**Status: v1 complete.** Core interfaces, the ingestion pipeline, the
+SQLite-backed index, the MCP server, local embedding, the human-facing
+skill commands, and Claude Code plugin packaging are all implemented.
 
 See [VISION.md](VISION.md) for the product point of view — who this is
 for and how ambiguous design calls get resolved.
@@ -48,7 +47,7 @@ for and how ambiguous design calls get resolved.
 
 ```
 tome-*.md (skill files)              ← /tome:search, /tome:add, /tome:sources
-        ↓ bundled in plugin.json alongside the MCP server
+        ↓ bundled alongside the MCP server (.claude-plugin/plugin.json, .mcp.json)
 Tome MCP Server (TypeScript, local daemon, stdio)
   ├── Crawler (URL / local path / git repo → raw documents)
   ├── Chunker (documents → overlapping text chunks)
@@ -102,6 +101,21 @@ If Ollama isn't installed, isn't running, or the model isn't pulled,
 Tome doesn't error — content is still indexed and searchable by keyword,
 and it upgrades to semantic ranking automatically the next time Ollama is
 reachable, with no restart or re-index required.
+
+### Troubleshooting
+
+If the MCP tools or `/tome:*` skill commands don't appear after
+installing, Claude Code doesn't display an MCP server startup failure
+proactively — it's skipped silently. Run:
+
+```
+claude --debug
+```
+
+and check the output for Tome's initialization errors (e.g. a failed
+build, or `dist/index.js` missing). The first session after install runs
+a one-time setup step (`npm install && npm run build`); if that step
+failed, `--debug` output is where it shows up.
 
 ## Contributing
 
