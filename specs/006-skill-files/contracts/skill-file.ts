@@ -29,8 +29,8 @@ export interface SkillFrontmatter {
  * - The exact name of the MCP tool this skill maps to (see
  *   data-model.md's per-skill mapping table).
  * - An instruction to ask the user for clarification on a missing or
- *   malformed required argument, for tome-add and tome-search (FR-006,
- *   FR-007) — not applicable to tome-sources, which takes no arguments.
+ *   malformed required argument, for add and search (FR-006,
+ *   FR-007) — not applicable to sources, which takes no arguments.
  * - An instruction to surface an underlying MCP tool failure readably
  *   rather than silently (FR-009).
  *

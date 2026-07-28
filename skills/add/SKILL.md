@@ -1,5 +1,5 @@
 ---
-name: tome-add
+name: add
 description: Index a new URL, local path, or git repository with Tome.
 argument-hint: <type> <origin>
 disable-model-invocation: true
@@ -12,7 +12,7 @@ $ARGUMENTS
 ```
 
 Deciding what to index is a human call — do not invoke this on your own
-initiative; only act when the user has explicitly run `/tome-add`.
+initiative; only act when the user has explicitly run `/tome:add`.
 
 Parse `$ARGUMENTS` as a source type (`url`, `path`, or `git`) followed by
 an origin (the URL, local path, or git repository location). If either

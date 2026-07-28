@@ -9,8 +9,8 @@ this repo.
 Don't conflate them:
 
 - **Tome the product** is a Claude Code plugin being built — it will
-  register its own MCP server and skill commands (`/tome-add`,
-  `/tome-sources`, `/tome-search`) for end users once implemented.
+  register its own MCP server and skill commands (`/tome:add`,
+  `/tome:sources`, `/tome:search`) for end users once implemented.
 - **Claude Code the tool** is also what's used to *build* Tome, via the
   Spec Kit skills installed in this repo (see below). The tool-quality
   principle in the constitution (Principle III) is about the former, not

@@ -6,8 +6,8 @@
 
 ## Summary
 
-Three Claude Code skill files — `/tome-add`, `/tome-sources`,
-`/tome-search` — each a thin, human-facing instruction layer over one of
+Three Claude Code skill files — `/tome:add`, `/tome:sources`,
+`/tome:search` — each a thin, human-facing instruction layer over one of
 milestone 004's existing MCP tools (`tome_add_source`,
 `tome_list_sources`, `tome_search` respectively). No new production
 TypeScript code: these are Markdown files with YAML frontmatter,
@@ -53,13 +53,16 @@ at the plugin root, not imported by Tome's own TypeScript code.
 
 **Performance Goals**: N/A — no runtime code path.
 
-**Constraints**: The skill folder names MUST be exactly `tome-add`,
-`tome-sources`, and `tome-search` — Claude Code does not namespace skill
-invocation names with the plugin name (unlike agents, which do get a
-`plugin-name:agent-name` prefix), so the folder name (or an explicit
-`name` frontmatter field) is the literal command string a user types
-(research.md #1). Getting this wrong would silently break SC-001
-through SC-003's exact command strings.
+**Constraints**: The skill folder names MUST be exactly `add`,
+`sources`, and `search`. Claude Code *does* namespace every plugin
+skill's invocation as `plugin-name:skill-name` — corrected during
+milestone 007's research after this plan's original text claimed
+otherwise (research.md #1's Correction). Since this plugin's own name is
+`tome`, the resulting commands are `/tome:add`, `/tome:sources`,
+`/tome:search`, matching spec.md's SC-001–SC-003. Naming the folders
+`tome-add`/`tome-sources`/`tome-search` (this plan's original choice)
+would have produced the redundant `/tome:tome-add` etc. — the folders
+were renamed to `add`/`sources`/`search` to avoid that.
 
 **Scale/Scope**: Three skill files, each a thin pass-through to an
 existing MCP tool — no batching, no new capability, no configuration
@@ -121,9 +124,9 @@ specs/006-skill-files/
 
 ```text
 skills/
-├── tome-add/SKILL.md      # NEW
-├── tome-sources/SKILL.md  # NEW
-└── tome-search/SKILL.md   # NEW
+├── add/SKILL.md      # NEW
+├── sources/SKILL.md  # NEW
+└── search/SKILL.md   # NEW
 
 tests/
 └── skills/

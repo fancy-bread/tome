@@ -39,53 +39,53 @@ frontmatter-parsing test helper every story's tests use.
 
 ## Phase 2: User Story 1 — Explicitly Add a Source via a Slash Command (Priority: P1) 🎯 MVP
 
-**Goal**: `/tome-add` exists, is correctly structured, and its body correctly instructs calling `tome_add_source` with clarification and failure handling
+**Goal**: `/tome:add` exists, is correctly structured, and its body correctly instructs calling `tome_add_source` with clarification and failure handling
 
-**Independent Test**: Parse `skills/tome-add/SKILL.md` and confirm its structure per data-model.md; manually invoke `/tome-add` in a `--plugin-dir` session
+**Independent Test**: Parse `skills/add/SKILL.md` and confirm its structure per data-model.md; manually invoke `/tome:add` in a `--plugin-dir` session
 
 ### Implementation for User Story 1
 
-- [X] T002 [US1] Write `skills/tome-add/SKILL.md` per data-model.md and `contracts/skill-file.ts`: frontmatter with `name: tome-add`, a `description`, an `argument-hint` (e.g. `<type> <origin>`), and `disable-model-invocation: true`; body containing the `$ARGUMENTS` placeholder and instructions to call `tome_add_source` with the parsed type and origin (FR-002), to ask the user for clarification when either is missing or malformed rather than guessing (FR-006), and to surface a failed tool call readably (FR-009)
+- [X] T002 [US1] Write `skills/add/SKILL.md` per data-model.md and `contracts/skill-file.ts`: frontmatter with `name: add`, a `description`, an `argument-hint` (e.g. `<type> <origin>`), and `disable-model-invocation: true`; body containing the `$ARGUMENTS` placeholder and instructions to call `tome_add_source` with the parsed type and origin (FR-002), to ask the user for clarification when either is missing or malformed rather than guessing (FR-006), and to surface a failed tool call readably (FR-009)
 
 ### Tests for User Story 1
 
-- [X] T003 [US1] Write `tests/skills/skill-files.test.ts`'s `tome-add` scenarios: frontmatter has `name: 'tome-add'`, a non-empty `description`, and `disable-model-invocation: true`; body contains `$ARGUMENTS` and the literal string `tome_add_source`; body instructs asking for clarification on a missing argument; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T002)
+- [X] T003 [US1] Write `tests/skills/skill-files.test.ts`'s `add` scenarios: frontmatter has `name: 'add'`, a non-empty `description`, and `disable-model-invocation: true`; body contains `$ARGUMENTS` and the literal string `tome_add_source`; body instructs asking for clarification on a missing argument; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T002)
 
-**Checkpoint**: `/tome-add` is real, tested, and correctly targets its MCP tool
+**Checkpoint**: `/tome:add` is real, tested, and correctly targets its MCP tool
 
 ---
 
 ## Phase 3: User Story 2 — Check What's Indexed via a Slash Command (Priority: P2)
 
-**Goal**: `/tome-sources` exists and correctly instructs calling `tome_list_sources`
+**Goal**: `/tome:sources` exists and correctly instructs calling `tome_list_sources`
 
-**Independent Test**: Parse `skills/tome-sources/SKILL.md`; manually invoke `/tome-sources`
+**Independent Test**: Parse `skills/sources/SKILL.md`; manually invoke `/tome:sources`
 
 ### Implementation for User Story 2
 
-- [X] T004 [US2] Write `skills/tome-sources/SKILL.md`: frontmatter with `name: tome-sources`, a `description`, and `disable-model-invocation: true` (no `argument-hint` — this command takes no arguments); body instructing the agent to call `tome_list_sources` and present every source's type, origin, status, and last-indexed time (FR-003), including the zero-sources case (report nothing indexed yet, not an error), and to surface a failed tool call readably (FR-009)
+- [X] T004 [US2] Write `skills/sources/SKILL.md`: frontmatter with `name: sources`, a `description`, and `disable-model-invocation: true` (no `argument-hint` — this command takes no arguments); body instructing the agent to call `tome_list_sources` and present every source's type, origin, status, and last-indexed time (FR-003), including the zero-sources case (report nothing indexed yet, not an error), and to surface a failed tool call readably (FR-009)
 
 ### Tests for User Story 2
 
-- [X] T005 [US2] Write `tests/skills/skill-files.test.ts`'s `tome-sources` scenarios: frontmatter has `name: 'tome-sources'`, a non-empty `description`, and `disable-model-invocation: true`; body contains the literal string `tome_list_sources`; body instructs reporting that nothing is indexed yet (not an error) when the source list is empty; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T004)
+- [X] T005 [US2] Write `tests/skills/skill-files.test.ts`'s `sources` scenarios: frontmatter has `name: 'sources'`, a non-empty `description`, and `disable-model-invocation: true`; body contains the literal string `tome_list_sources`; body instructs reporting that nothing is indexed yet (not an error) when the source list is empty; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T004)
 
-**Checkpoint**: `/tome-sources` is real, tested, independent of `/tome-add`
+**Checkpoint**: `/tome:sources` is real, tested, independent of `/tome:add`
 
 ---
 
 ## Phase 4: User Story 3 — Manually Query the Index via a Slash Command (Priority: P3)
 
-**Goal**: `/tome-search` exists and correctly instructs calling `tome_search`
+**Goal**: `/tome:search` exists and correctly instructs calling `tome_search`
 
-**Independent Test**: Parse `skills/tome-search/SKILL.md`; manually invoke `/tome-search`
+**Independent Test**: Parse `skills/search/SKILL.md`; manually invoke `/tome:search`
 
 ### Implementation for User Story 3
 
-- [X] T006 [US3] Write `skills/tome-search/SKILL.md`: frontmatter with `name: tome-search`, a `description`, an `argument-hint` (e.g. `<query>`), and `disable-model-invocation: true`; body containing the `$ARGUMENTS` placeholder and instructions to call `tome_search` with the parsed query (FR-004), to ask the user for a query when none was given rather than running an empty search (FR-007), to report "no results" rather than an error when nothing matches, and to surface a failed tool call readably (FR-009)
+- [X] T006 [US3] Write `skills/search/SKILL.md`: frontmatter with `name: search`, a `description`, an `argument-hint` (e.g. `<query>`), and `disable-model-invocation: true`; body containing the `$ARGUMENTS` placeholder and instructions to call `tome_search` with the parsed query (FR-004), to ask the user for a query when none was given rather than running an empty search (FR-007), to report "no results" rather than an error when nothing matches, and to surface a failed tool call readably (FR-009)
 
 ### Tests for User Story 3
 
-- [X] T007 [US3] Write `tests/skills/skill-files.test.ts`'s `tome-search` scenarios: frontmatter has `name: 'tome-search'`, a non-empty `description`, and `disable-model-invocation: true`; body contains `$ARGUMENTS` and the literal string `tome_search`; body instructs asking for a query when none is given; body instructs reporting "no results" (not an error) when nothing matches; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T006)
+- [X] T007 [US3] Write `tests/skills/skill-files.test.ts`'s `search` scenarios: frontmatter has `name: 'search'`, a non-empty `description`, and `disable-model-invocation: true`; body contains `$ARGUMENTS` and the literal string `tome_search`; body instructs asking for a query when none is given; body instructs reporting "no results" (not an error) when nothing matches; body instructs surfacing a failed tool call readably (FR-009) (depends on T001, T006)
 
 **Checkpoint**: All three skills independently pass — full milestone scope
 
@@ -97,7 +97,7 @@ frontmatter-parsing test helper every story's tests use.
 
 - [X] T008 Run `npx tsc --noEmit` from repo root — only `tests/skills/*.ts` is new TypeScript this milestone; `skills/*/SKILL.md` files are content, not compiled (depends on T003, T005, T007)
 - [X] T009 Run `npm run test:coverage`; confirm the gate still passes. No `src/` code changed this milestone, so no new coverage surface exists to create a gap (depends on T008)
-- [X] T010 Run quickstart.md's manual smoke test: `claude --plugin-dir <this-repo>`, `/reload-plugins`, then exercise `/tome-add`, `/tome-sources`, and `/tome-search`, including invoking `/tome-add` and `/tome-search` with no arguments to confirm they prompt for what's missing rather than erroring (depends on T009) — **Outcome**: skipped by user choice, matching milestone 005's T016 precedent — running it means spawning a nested live Claude Code session incurring real API usage, which wasn't taken unprompted. Explicitly recorded as skipped, not passed — no bearing on T001–T009's automated coverage of every skill's structure and content.
+- [X] T010 Run quickstart.md's manual smoke test: `claude --plugin-dir <this-repo>`, `/reload-plugins`, then exercise `/tome:add`, `/tome:sources`, and `/tome:search`, including invoking `/tome:add` and `/tome:search` with no arguments to confirm they prompt for what's missing rather than erroring (depends on T009) — **Outcome**: skipped by user choice, matching milestone 005's T016 precedent — running it means spawning a nested live Claude Code session incurring real API usage, which wasn't taken unprompted. Explicitly recorded as skipped, not passed — no bearing on T001–T009's automated coverage of every skill's structure and content.
 
 ---
 
@@ -131,9 +131,9 @@ frontmatter-parsing test helper every story's tests use.
 
 ```bash
 # All three skill files can be written in parallel — different files, no shared state:
-Task: "Write skills/tome-add/SKILL.md"
-Task: "Write skills/tome-sources/SKILL.md"
-Task: "Write skills/tome-search/SKILL.md"
+Task: "Write skills/add/SKILL.md"
+Task: "Write skills/sources/SKILL.md"
+Task: "Write skills/search/SKILL.md"
 ```
 
 ---
@@ -143,16 +143,16 @@ Task: "Write skills/tome-search/SKILL.md"
 ### MVP First (User Story 1 Only)
 
 1. Complete Phase 1: Foundational (parsing helper)
-2. Complete Phase 2: User Story 1 (`/tome-add`)
-3. **STOP and VALIDATE**: `/tome-add` works end-to-end in a real `--plugin-dir` session
+2. Complete Phase 2: User Story 1 (`/tome:add`)
+3. **STOP and VALIDATE**: `/tome:add` works end-to-end in a real `--plugin-dir` session
 4. This proves the pattern — a skill file correctly instructing a call to an existing MCP tool — before repeating it twice more
 
 ### Incremental Delivery
 
 1. Foundational → parsing helper ready
-2. Add US1 → validate → `/tome-add` works (MVP!)
-3. Add US2 → validate → `/tome-sources` works, independent of US1
-4. Add US3 → validate → `/tome-search` works, independent of US1/US2
+2. Add US1 → validate → `/tome:add` works (MVP!)
+3. Add US2 → validate → `/tome:sources` works, independent of US1
+4. Add US3 → validate → `/tome:search` works, independent of US1/US2
 5. Polish → type-check, coverage gate (unaffected), manual smoke test of all three together
 
 ## Notes

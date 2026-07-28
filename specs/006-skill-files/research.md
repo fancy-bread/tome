@@ -12,19 +12,34 @@ layout — not assumed from either piece of internal reference material.
 ## 1. Plugin skill file layout, naming, and namespacing
 
 **Decision**: Each skill is a *directory* under a `skills/` folder at
-the plugin root: `skills/tome-add/SKILL.md`,
-`skills/tome-sources/SKILL.md`, `skills/tome-search/SKILL.md`.
-`plugin.json` needs no explicit `"skills"` field — Claude Code
-auto-discovers the `skills/` directory the same way it auto-discovers a
-project's `.claude/skills/`. The folder name (or an explicit `name`
-frontmatter field, which takes precedence and is what this milestone
-uses to lock the invocation string against any future directory rename)
-becomes the literal slash-command string with **no plugin-name colon
-prefix** — unlike agents, which do get namespaced as
-`plugin-name:agent-name`. So naming the folders exactly `tome-add`,
-`tome-sources`, `tome-search` produces exactly `/tome-add`,
-`/tome-sources`, `/tome-search`, matching spec.md's SC-001–SC-003
-literal command strings.
+the plugin root: `skills/add/SKILL.md`, `skills/sources/SKILL.md`,
+`skills/search/SKILL.md`. `plugin.json` needs no explicit `"skills"`
+field — Claude Code auto-discovers the `skills/` directory the same way
+it auto-discovers a project's `.claude/skills/`. The folder name (or an
+explicit `name` frontmatter field, which takes precedence and is what
+this milestone uses to lock the invocation string against any future
+directory rename) becomes the *local* part of the slash-command string.
+
+> **Correction (made during milestone 007's research, not this
+> milestone's original pass)**: this decision originally claimed skill
+> invocation names have no plugin-name colon prefix, based on a
+> subagent's answer that turned out to be wrong. Claude Code's official
+> "Create plugins" guide
+> (`https://code.claude.com/docs/en/plugins`) states, repeatedly and
+> unambiguously, that "Plugin skills are always namespaced (like
+> `/plugin-name:hello`) to prevent conflicts," fetched and confirmed
+> directly during milestone 007's planning. The original folder names
+> (`tome-add`, `tome-sources`, `tome-search`) would have produced the
+> awkward, redundant `/tome:tome-add` etc., since the plugin itself is
+> named `tome` — exactly the collision this research originally (and
+> incorrectly) claimed didn't apply. The folders were renamed to `add`,
+> `sources`, `search` so the real, namespaced invocation strings are
+> `/tome:add`, `/tome:sources`, `/tome:search` — spec.md's SC-001–SC-003
+> and every `SKILL.md`/test/README reference were updated to match. See
+> `specs/007-plugin-packaging/research.md` for the full correction
+> record and how it was caught (a direct doc fetch, not another
+> subagent round-trip, after the subagent-sourced claim in this
+> section proved wrong).
 
 **Rationale**: `tdd.md`'s flat-file sketch was written before real
 Claude Code plugin documentation was consulted (this project's `CLAUDE.md`
@@ -32,12 +47,12 @@ explicitly separates "Tome the product" from "Claude Code the tool used
 to build it" — this is a case where the product doc's early guess about
 the tool's mechanism needed correcting against the tool itself, the same
 category of correction as milestone 002's `pdf-parse` API discovery or
-milestone 004's MCP SDK verification). Confirmed against Claude Code's
+milestone 004's MCP SDK verification). The directory-per-skill layout
+and auto-discovery were confirmed correctly against Claude Code's
 official plugins reference documentation
-(`https://code.claude.com/docs/en/plugins-reference`), which states
-skill folder names are used as invocation names directly, with no
-automatic namespacing — namespacing was requested for skills in a
-GitHub feature request but is not implemented.
+(`https://code.claude.com/docs/en/plugins-reference`); the namespacing
+claim, also sourced from that same research pass, was not — see the
+Correction above.
 
 **Alternatives considered**: This repo's own `.claude/skills/<name>/SKILL.md`
 convention was initially assumed to be the same mechanism a
@@ -57,7 +72,7 @@ from `tdd.md`'s original sketch where the real mechanism required it.
 
 ```yaml
 ---
-name: tome-add
+name: add
 description: <what this command does, shown in the slash-command menu>
 argument-hint: <short hint text for expected arguments>
 disable-model-invocation: true
@@ -81,7 +96,7 @@ three commands remain human-triggered.
 
 **Alternatives considered**: Omitting `disable-model-invocation`
 (leaving skills model-invocable by default) — rejected; it would let
-the model invoke e.g. `/tome-add` on its own initiative, duplicating and
+the model invoke e.g. `/tome:add` on its own initiative, duplicating and
 potentially conflicting with the model's already-correct path of calling
 `tome_add_source` directly when it decides indexing is needed, which is
 not how the PRD frames source-adding ("Human — deciding what to index is
