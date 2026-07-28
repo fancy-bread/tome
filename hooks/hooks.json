@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "[ -f \"${CLAUDE_PLUGIN_ROOT}/dist/index.js\" ] || (cd \"${CLAUDE_PLUGIN_ROOT}\" && npm install && npm run build)",
+        "async": true,
+        "statusMessage": "Setting up Tome..."
+      }
+    ]
+  }
+}
