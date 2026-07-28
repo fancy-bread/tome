@@ -5,8 +5,10 @@ MCP-compatible agent tool). Point it at a URL, a local path, or a git repo;
 it crawls, chunks, embeds, and makes the content queryable — the equivalent
 of Cursor's `@Docs` indexing, but not tied to one editor.
 
-**Status: pre-implementation.** The architecture and project constitution
-are ratified; no server code exists yet.
+**Status: in progress.** Core interfaces, the ingestion pipeline, the
+SQLite-backed index, the MCP server, and local embedding are implemented;
+the human-facing skill commands and Claude Code plugin packaging are not
+yet built.
 
 See [VISION.md](VISION.md) for the product point of view — who this is
 for and how ambiguous design calls get resolved.
@@ -64,6 +66,42 @@ claude plugin install github://fancy-bread/tome
 
 No separate daemon management or manual MCP registration — installing the
 plugin gives you the indexed-docs capability directly.
+
+### Ollama (optional, for semantic search)
+
+Tome works fully without this — indexing and search both work with plain
+keyword (FTS5) matching. Installing [Ollama](https://ollama.com) upgrades
+search from keyword matching to semantic ranking; there's nothing to
+configure, Tome detects and uses it automatically.
+
+```
+# macOS
+brew install ollama
+
+# Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Windows: download the installer from https://ollama.com
+```
+
+Ollama typically starts itself in the background after install (as a menu
+bar app on macOS, or a system service on Linux). If it isn't running,
+start it manually:
+
+```
+ollama serve
+```
+
+Then pull the embedding model Tome uses:
+
+```
+ollama pull nomic-embed-text
+```
+
+If Ollama isn't installed, isn't running, or the model isn't pulled,
+Tome doesn't error — content is still indexed and searchable by keyword,
+and it upgrades to semantic ranking automatically the next time Ollama is
+reachable, with no restart or re-index required.
 
 ## Contributing
 
