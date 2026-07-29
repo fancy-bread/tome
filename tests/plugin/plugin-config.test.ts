@@ -19,11 +19,19 @@ const EXPECTED = {
   mcpArgsPlaceholder: '${CLAUDE_PLUGIN_ROOT}/dist/index.js',
   dataDirEnvVar: 'CLAUDE_PLUGIN_DATA',
   dataDirEnvPlaceholder: '${CLAUDE_PLUGIN_DATA}',
+  marketplaceName: 'tome',
+  marketplacePluginSource: './',
 } as const;
 
 interface PluginManifest {
   name: string;
   description: string;
+}
+
+interface MarketplaceConfig {
+  name: string;
+  owner: { name: string };
+  plugins: Array<{ name: string; source: string }>;
 }
 
 interface McpConfig {
@@ -34,7 +42,11 @@ interface McpConfig {
 }
 
 interface HooksConfig {
-  hooks: { SessionStart?: Array<{ type: string; command: string; async?: boolean }> };
+  hooks: {
+    SessionStart?: Array<{
+      hooks: Array<{ type: string; command: string; async?: boolean }>;
+    }>;
+  };
 }
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
@@ -49,6 +61,18 @@ describe('.claude-plugin/plugin.json', () => {
   it('has the expected name and a non-empty description', () => {
     expect(manifest.name).toBe(EXPECTED.pluginName);
     expect(manifest.description).toBeTruthy();
+  });
+});
+
+describe('.claude-plugin/marketplace.json (FR-005, corrected post-release)', () => {
+  const marketplace = readJson<MarketplaceConfig>(join(REPO_ROOT, '.claude-plugin', 'marketplace.json'));
+
+  it('declares this repo as its own marketplace, listing the tome plugin', () => {
+    expect(marketplace.name).toBe(EXPECTED.marketplaceName);
+    expect(marketplace.owner?.name).toBeTruthy();
+    const entry = marketplace.plugins.find((p) => p.name === EXPECTED.pluginName);
+    expect(entry).toBeDefined();
+    expect(entry!.source).toBe(EXPECTED.marketplacePluginSource);
   });
 });
 
@@ -69,9 +93,16 @@ describe('hooks/hooks.json', () => {
   const config = readJson<HooksConfig>(join(REPO_ROOT, 'hooks', 'hooks.json'));
 
   it('declares an async SessionStart build hook, guarded by an idempotency check', () => {
-    const entries = config.hooks.SessionStart;
+    const matchers = config.hooks.SessionStart;
+    expect(matchers).toHaveLength(1);
+    // Each matcher entry wraps its actual command(s) in a nested `hooks`
+    // array — a schema requirement confirmed empirically via `claude
+    // plugin details`, which reported "failed to load" until this
+    // nesting was added (research.md #5's Correction — a second real
+    // bug found by that same verification pass).
+    const entries = matchers![0].hooks;
     expect(entries).toHaveLength(1);
-    const [entry] = entries!;
+    const [entry] = entries;
     expect(entry.type).toBe('command');
     expect(entry.command).toContain('npm install');
     expect(entry.command).toContain('npm run build');

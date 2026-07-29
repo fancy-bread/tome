@@ -5,9 +5,12 @@ MCP-compatible agent tool). Point it at a URL, a local path, or a git repo;
 it crawls, chunks, embeds, and makes the content queryable — the equivalent
 of Cursor's `@Docs` indexing, but not tied to one editor.
 
-**Status: v1 complete.** Core interfaces, the ingestion pipeline, the
-SQLite-backed index, the MCP server, local embedding, the human-facing
-skill commands, and Claude Code plugin packaging are all implemented.
+**Status: pre-release (v0.1.1).** All v1-scoped functionality is
+implemented — core interfaces, the ingestion pipeline, the SQLite-backed
+index, the MCP server, local embedding, the human-facing skill commands,
+and Claude Code plugin packaging — but it hasn't yet had real-world
+install/usage validation, so treat it as pre-release rather than a
+stable 1.0.
 
 See [VISION.md](VISION.md) for the product point of view — who this is
 for and how ambiguous design calls get resolved.
@@ -57,11 +60,13 @@ Tome MCP Server (TypeScript, local daemon, stdio)
 
 ## Install
 
-Not yet published:
+```
+claude plugin marketplace add fancy-bread/tome
+claude plugin install tome@tome
+```
 
-```
-claude plugin install github://fancy-bread/tome
-```
+(Local clone, no GitHub: `claude plugin marketplace add /path/to/tome`,
+then `claude plugin install tome@tome`.)
 
 No separate daemon management or manual MCP registration — installing the
 plugin gives you the indexed-docs capability directly.

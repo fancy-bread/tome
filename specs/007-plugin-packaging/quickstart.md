@@ -48,6 +48,10 @@ npm test
   troubleshooting guidance mentioning `claude --debug` — the documented
   workaround for SC-004, since Claude Code doesn't proactively surface
   an MCP server startup failure (research.md #6).
+- **FR-005 (corrected post-release)** — `plugin-config.test.ts`:
+  `.claude-plugin/marketplace.json` parses and declares this repo as
+  its own marketplace, listing the `tome` plugin with `source: "./"`
+  (research.md #5's Correction).
 
 Structural/content checks are the ceiling of what's automatable here —
 whether the real Claude Code harness actually runs the hook, injects the
@@ -55,6 +59,32 @@ variables, and starts the server correctly is a live-session concern,
 the same limitation milestone 006 accepted for its skill files.
 
 ## Manual smoke test (real Claude Code session)
+
+**Corrected post-release (research.md #5)**: `claude plugin install
+<git-url>` has no direct-install form — install always goes through a
+marketplace, even a self-hosted one, and the install command's
+`@marketplace-name` is the name `marketplace.json` itself declares
+(`tome`), not the `owner/repo` string used to add it. To actually prove
+FR-005/SC-001 — not just `--plugin-dir` session-scoped loading — run the
+real install flow:
+
+```bash
+claude plugin marketplace add fancy-bread/tome
+claude plugin install tome@tome
+```
+
+(Or fully local, no GitHub: `claude plugin marketplace add
+/path/to/tome` then `claude plugin install tome@tome` — same command,
+same self-hosted marketplace name either way.) Confirm with
+`claude plugin details tome@tome` that `Status: ✔ enabled` and the
+component inventory shows all 3 skills, 1 hook, and 1 MCP server —
+`--plugin-dir` below only proves session-scoped loading works, not that
+the marketplace-mediated install path or `hooks/hooks.json`'s schema are
+actually correct (both had real bugs only a live install caught — see
+research.md #5's Correction).
+
+For faster dev-loop iteration on the config files themselves,
+`--plugin-dir` remains useful and doesn't need a marketplace at all:
 
 ```bash
 claude --plugin-dir /path/to/tome

@@ -37,11 +37,33 @@ export interface CommandHookEntry {
   statusMessage?: string;
 }
 
+/**
+ * Each event array entry wraps its command(s) in a nested `hooks`
+ * array — confirmed empirically via `claude plugin details` (research.md
+ * #5's Correction), not assumed. A flat `CommandHookEntry` directly in
+ * the event array (this file's original, wrong shape) fails to load.
+ */
+export interface HookMatcherEntry {
+  matcher?: string;
+  hooks: CommandHookEntry[];
+}
+
 export interface HooksConfig {
   hooks: {
-    SessionStart?: CommandHookEntry[];
-    [event: string]: CommandHookEntry[] | undefined;
+    SessionStart?: HookMatcherEntry[];
+    [event: string]: HookMatcherEntry[] | undefined;
   };
+}
+
+/**
+ * Added post-release (research.md #5's Correction): a marketplace is
+ * always required for a persistent install, even self-hosted in the
+ * same repo as the plugin.
+ */
+export interface MarketplaceConfig {
+  name: string;
+  owner: { name: string };
+  plugins: Array<{ name: string; source: string }>;
 }
 
 /**
@@ -54,4 +76,6 @@ export const EXPECTED = {
   mcpArgsPlaceholder: '${CLAUDE_PLUGIN_ROOT}/dist/index.js',
   dataDirEnvVar: 'CLAUDE_PLUGIN_DATA',
   dataDirEnvPlaceholder: '${CLAUDE_PLUGIN_DATA}',
+  marketplaceName: 'tome',
+  marketplacePluginSource: './',
 } as const;

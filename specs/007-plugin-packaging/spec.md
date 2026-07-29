@@ -105,9 +105,15 @@ indexed content are still there without re-adding it.
   durable, per-plugin data directory the Claude Code plugin harness
   provides, rather than a location that could be cleared between
   sessions.
-- **FR-005**: The plugin MUST be installable directly from this
-  project's git repository, with no separate marketplace registration
-  required.
+- **FR-005**: The plugin MUST be installable from this project's git
+  repository via Claude Code's standard marketplace-add-then-install
+  flow, with the repository itself serving as its own marketplace
+  listing — no separate marketplace repository or hosted registry
+  required. **Corrected post-release** (chore/marketplace-manifest,
+  after v0.1.0): a real install attempt showed `claude plugin install
+  <git-url>` has no direct-install form at all — a marketplace is
+  always required, even for a single self-hosted plugin. See
+  research.md #5's Correction.
 - **FR-006**: The plugin manifest MUST declare enough identifying
   metadata (at minimum a name and description) for it to be
   recognizable in Claude Code's plugin listing.
@@ -158,8 +164,13 @@ indexed content are still there without re-adding it.
   manifest declaration, per milestone 006's own verified research —
   this milestone does not need to re-verify that, only confirm it still
   holds under a real install (not just `--plugin-dir` dev-mode loading).
-- A hosted marketplace listing (`marketplace.json`) remains out of scope
-  — git-based installation is sufficient for v1, per the PRD.
+- A *separate, hosted* marketplace listing (a distinct repository or
+  registry entry beyond this project's own repo) remains out of scope —
+  per the PRD's "no central registry required in v1." **Corrected
+  post-release**: this project's own `.claude-plugin/marketplace.json`,
+  making this repo self-hosting its own single-plugin marketplace, is
+  required regardless — Claude Code has no marketplace-free persistent
+  install path at all (research.md #5's Correction).
 - Real local embedding (milestone 005) and its graceful degradation to
   lexical search when Ollama is unavailable require no special handling
   here — installation and packaging are orthogonal to whether Ollama

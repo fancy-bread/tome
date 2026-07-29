@@ -175,18 +175,106 @@ before anything was ever actually distributed.
 
 ## 5. Marketplace listing
 
-**Decision**: Out of scope, confirmed — `claude plugin install
-github://fancy-bread/tome` (git-based install) requires no
-`marketplace.json`; that mechanism is entirely separate from and
-additional to direct git installation, per both the PRD and the plugins
-guide's own distribution section.
+**Original decision (v0.1.0, wrong)**: Out of scope — `claude plugin
+install github://fancy-bread/tome` (git-based install) was assumed to
+require no `marketplace.json`, carried forward from the PRD's own
+distribution claim without independent verification. This was the one
+research item this milestone treated as settled at the PRD level rather
+than checking directly — every other technical unknown (manifest
+shape, build step, env var name, skill namespacing, startup-failure
+visibility) was independently verified; this one wasn't, and it was
+wrong.
 
-**Rationale**: Matches spec.md's Assumptions and Constitution Principle
-V — no scope creep into a v2-shaped distribution concern.
+> **Correction (found post-release, in `chore/marketplace-manifest`
+> after v0.1.0 was tagged)**: a real install attempt —
+> `claude plugin install github://fancy-bread/tome` — failed with
+> `Plugin "github://fancy-bread/tome" not found in any configured
+> marketplace`. Verified against
+> `https://code.claude.com/docs/en/plugin-marketplaces` directly: there
+> is **no** direct git-URL or filesystem-path install form at all.
+> Every persistent install — local or remote — goes through
+> `/plugin marketplace add <source>` followed by
+> `/plugin install <plugin-name>@<marketplace-name>`. `--plugin-dir` is
+> the only marketplace-free mechanism, and it is session-scoped only
+> (not a persistent install).
+>
+> **Fix**: a repo can be both the plugin and its own marketplace — one
+> `.claude-plugin/marketplace.json` at the repo root, alongside the
+> existing `plugin.json`:
+> ```json
+> {
+>   "name": "tome",
+>   "owner": { "name": "Fancy Bread" },
+>   "plugins": [{ "name": "tome", "source": "./" }]
+> }
+> ```
+> `source: "./"` resolves relative to the marketplace root (the
+> directory containing `.claude-plugin/`) — correct here since the
+> plugin and the marketplace listing are the same repo. The real
+> install commands are `claude plugin marketplace add fancy-bread/tome`
+> then `claude plugin install tome@fancy-bread/tome` (or, for a fully
+> local/no-GitHub test: `claude plugin marketplace add ./path/to/tome`
+> then `claude plugin install tome@tome`). `README.md`, `spec.md`'s
+> FR-005 and Assumptions, and this decision were all corrected to
+> match. Shipped as a `0.1.0` → `0.1.1` patch version bump, since
+> v0.1.0 was — in practice — uninstallable by the one documented method
+> anyone would actually try.
 
-**Alternatives considered**: None — already decided at the PRD level;
-this research only confirms nothing about the manifest/MCP/hook design
-above accidentally requires a marketplace registration as a side effect.
+**Rationale for the original (wrong) decision**: Matched spec.md's
+Assumptions and Constitution Principle V's no-scope-creep intent, but
+"matches the PRD" isn't the same as "verified against the real tool" —
+the same distinction every other decision in this file draws correctly,
+and this one didn't, until a live install attempt forced the check.
+
+**Alternatives considered (for the fix)**: A separate marketplace
+repository — rejected, unnecessary for a single plugin; this project's
+own repo self-hosting one `marketplace.json` entry is simpler and
+matches Constitution Principle V. Waiting for a hosted/official
+marketplace listing before making the plugin installable at all —
+rejected, that's a genuinely separate, opt-in distribution channel
+(confirmed still true), not a substitute for a self-hosted marketplace
+enabling direct installs today.
+
+> **Second correction (same investigation, found by actually running
+> the real `claude` CLI end to end rather than stopping at
+> `claude plugin validate` passing)**: two more real bugs surfaced only
+> once an actual install was attempted:
+>
+> 1. **Wrong marketplace identifier in the install command.**
+>    `claude plugin marketplace add fancy-bread/tome` registers the
+>    marketplace under the **name `marketplace.json` itself declares**
+>    (`"tome"`), not the `owner/repo` string used to add it. Running
+>    `claude plugin install tome@fancy-bread/tome` (this project's
+>    original, wrong guidance) fails with `Plugin "tome" not found in
+>    marketplace "fancy-bread/tome"` — there is no marketplace
+>    registered under that name. The correct command is
+>    `claude plugin install tome@tome`. `README.md` corrected.
+> 2. **`hooks/hooks.json`'s schema was wrong — the plugin failed to
+>    load entirely**, not just the hook. `claude plugin details tome@tome`
+>    reported `Status: ✘ failed to load` with `Hook load failed:
+>    expected array, received undefined` at
+>    `hooks.SessionStart[0].hooks`. Each event-array entry must wrap its
+>    command(s) in a **nested** `hooks` array —
+>    `{ "hooks": [{ "type": "command", ... }] }` — not a flat command
+>    object directly in the `SessionStart` array (this project's
+>    original, wrong shape). Ironically, the correct nested shape was
+>    already visible in this same research file's own decision #1,
+>    quoted from the primary docs' migration example
+>    (`"PostToolUse": [{ "matcher": ..., "hooks": [{ "type": "command",
+>    ... }] }]`) — it just wasn't cross-checked against what got written
+>    into `hooks/hooks.json` itself. Fixed, and reverified: after the
+>    fix, `claude plugin details tome@tome` reports `Status: ✔ enabled`
+>    with all 3 skills, 1 hook, and 1 MCP server correctly inventoried.
+>
+> Both were caught by actually running `claude plugin marketplace add`
+> → `claude plugin install` → `claude plugin details` against a real
+> local copy of this repo (`chore/marketplace-manifest`'s own follow-up,
+> after that branch had already merged) — not by further research-agent
+> questions, which had already been wrong twice in this same
+> investigation (the "no marketplace needed" claim, and, transitively,
+> the un-verified hooks schema). The lesson repeated a third time: for
+> anything this consequential, run the real tool and read its real
+> output before trusting an explanation of what it should do.
 
 ## 6. MCP server startup failure visibility — a correction to this plan's own Constitution Check
 
