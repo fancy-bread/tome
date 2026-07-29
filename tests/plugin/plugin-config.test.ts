@@ -42,7 +42,11 @@ interface McpConfig {
 }
 
 interface HooksConfig {
-  hooks: { SessionStart?: Array<{ type: string; command: string; async?: boolean }> };
+  hooks: {
+    SessionStart?: Array<{
+      hooks: Array<{ type: string; command: string; async?: boolean }>;
+    }>;
+  };
 }
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
@@ -89,9 +93,16 @@ describe('hooks/hooks.json', () => {
   const config = readJson<HooksConfig>(join(REPO_ROOT, 'hooks', 'hooks.json'));
 
   it('declares an async SessionStart build hook, guarded by an idempotency check', () => {
-    const entries = config.hooks.SessionStart;
+    const matchers = config.hooks.SessionStart;
+    expect(matchers).toHaveLength(1);
+    // Each matcher entry wraps its actual command(s) in a nested `hooks`
+    // array — a schema requirement confirmed empirically via `claude
+    // plugin details`, which reported "failed to load" until this
+    // nesting was added (research.md #5's Correction — a second real
+    // bug found by that same verification pass).
+    const entries = matchers![0].hooks;
     expect(entries).toHaveLength(1);
-    const [entry] = entries!;
+    const [entry] = entries;
     expect(entry.type).toBe('command');
     expect(entry.command).toContain('npm install');
     expect(entry.command).toContain('npm run build');

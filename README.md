@@ -60,16 +60,13 @@ Tome MCP Server (TypeScript, local daemon, stdio)
 
 ## Install
 
-This repo is both the plugin and its own marketplace listing. Add the
-marketplace once, then install the plugin from it:
-
 ```
 claude plugin marketplace add fancy-bread/tome
-claude plugin install tome@fancy-bread/tome
+claude plugin install tome@tome
 ```
 
-(To test a local clone without GitHub: `claude plugin marketplace add
-/path/to/tome`, then `claude plugin install tome@tome`.)
+(Local clone, no GitHub: `claude plugin marketplace add /path/to/tome`,
+then `claude plugin install tome@tome`.)
 
 No separate daemon management or manual MCP registration — installing the
 plugin gives you the indexed-docs capability directly.

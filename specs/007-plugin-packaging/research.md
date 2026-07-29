@@ -235,6 +235,47 @@ rejected, that's a genuinely separate, opt-in distribution channel
 (confirmed still true), not a substitute for a self-hosted marketplace
 enabling direct installs today.
 
+> **Second correction (same investigation, found by actually running
+> the real `claude` CLI end to end rather than stopping at
+> `claude plugin validate` passing)**: two more real bugs surfaced only
+> once an actual install was attempted:
+>
+> 1. **Wrong marketplace identifier in the install command.**
+>    `claude plugin marketplace add fancy-bread/tome` registers the
+>    marketplace under the **name `marketplace.json` itself declares**
+>    (`"tome"`), not the `owner/repo` string used to add it. Running
+>    `claude plugin install tome@fancy-bread/tome` (this project's
+>    original, wrong guidance) fails with `Plugin "tome" not found in
+>    marketplace "fancy-bread/tome"` — there is no marketplace
+>    registered under that name. The correct command is
+>    `claude plugin install tome@tome`. `README.md` corrected.
+> 2. **`hooks/hooks.json`'s schema was wrong — the plugin failed to
+>    load entirely**, not just the hook. `claude plugin details tome@tome`
+>    reported `Status: ✘ failed to load` with `Hook load failed:
+>    expected array, received undefined` at
+>    `hooks.SessionStart[0].hooks`. Each event-array entry must wrap its
+>    command(s) in a **nested** `hooks` array —
+>    `{ "hooks": [{ "type": "command", ... }] }` — not a flat command
+>    object directly in the `SessionStart` array (this project's
+>    original, wrong shape). Ironically, the correct nested shape was
+>    already visible in this same research file's own decision #1,
+>    quoted from the primary docs' migration example
+>    (`"PostToolUse": [{ "matcher": ..., "hooks": [{ "type": "command",
+>    ... }] }]`) — it just wasn't cross-checked against what got written
+>    into `hooks/hooks.json` itself. Fixed, and reverified: after the
+>    fix, `claude plugin details tome@tome` reports `Status: ✔ enabled`
+>    with all 3 skills, 1 hook, and 1 MCP server correctly inventoried.
+>
+> Both were caught by actually running `claude plugin marketplace add`
+> → `claude plugin install` → `claude plugin details` against a real
+> local copy of this repo (`chore/marketplace-manifest`'s own follow-up,
+> after that branch had already merged) — not by further research-agent
+> questions, which had already been wrong twice in this same
+> investigation (the "no marketplace needed" claim, and, transitively,
+> the un-verified hooks schema). The lesson repeated a third time: for
+> anything this consequential, run the real tool and read its real
+> output before trusting an explanation of what it should do.
+
 ## 6. MCP server startup failure visibility — a correction to this plan's own Constitution Check
 
 **Decision**: Claude Code does **not** proactively surface an MCP server

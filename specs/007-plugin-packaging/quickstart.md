@@ -62,20 +62,26 @@ the same limitation milestone 006 accepted for its skill files.
 
 **Corrected post-release (research.md #5)**: `claude plugin install
 <git-url>` has no direct-install form — install always goes through a
-marketplace, even a self-hosted one. To actually prove FR-005/SC-001 —
-not just `--plugin-dir` session-scoped loading — run the real install
-flow:
+marketplace, even a self-hosted one, and the install command's
+`@marketplace-name` is the name `marketplace.json` itself declares
+(`tome`), not the `owner/repo` string used to add it. To actually prove
+FR-005/SC-001 — not just `--plugin-dir` session-scoped loading — run the
+real install flow:
 
 ```bash
 claude plugin marketplace add fancy-bread/tome
-claude plugin install tome@fancy-bread/tome
+claude plugin install tome@tome
 ```
 
 (Or fully local, no GitHub: `claude plugin marketplace add
-/path/to/tome` then `claude plugin install tome@tome`.) Confirm the
-install succeeds and persists to a *new* session — `--plugin-dir`
-below only proves loading works, not that the marketplace-mediated
-install path itself works.
+/path/to/tome` then `claude plugin install tome@tome` — same command,
+same self-hosted marketplace name either way.) Confirm with
+`claude plugin details tome@tome` that `Status: ✔ enabled` and the
+component inventory shows all 3 skills, 1 hook, and 1 MCP server —
+`--plugin-dir` below only proves session-scoped loading works, not that
+the marketplace-mediated install path or `hooks/hooks.json`'s schema are
+actually correct (both had real bugs only a live install caught — see
+research.md #5's Correction).
 
 For faster dev-loop iteration on the config files themselves,
 `--plugin-dir` remains useful and doesn't need a marketplace at all:
