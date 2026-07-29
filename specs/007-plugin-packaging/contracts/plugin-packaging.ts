@@ -45,6 +45,17 @@ export interface HooksConfig {
 }
 
 /**
+ * Added post-release (research.md #5's Correction): a marketplace is
+ * always required for a persistent install, even self-hosted in the
+ * same repo as the plugin.
+ */
+export interface MarketplaceConfig {
+  name: string;
+  owner: { name: string };
+  plugins: Array<{ name: string; source: string }>;
+}
+
+/**
  * Fixed values this project's config files must contain — asserted by
  * tests/plugin/plugin-config.test.ts, not just typed here.
  */
@@ -54,4 +65,6 @@ export const EXPECTED = {
   mcpArgsPlaceholder: '${CLAUDE_PLUGIN_ROOT}/dist/index.js',
   dataDirEnvVar: 'CLAUDE_PLUGIN_DATA',
   dataDirEnvPlaceholder: '${CLAUDE_PLUGIN_DATA}',
+  marketplaceName: 'tome',
+  marketplacePluginSource: './',
 } as const;

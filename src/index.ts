@@ -8,6 +8,7 @@
 import { mkdir } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { OllamaEmbedder } from './embedding/ollama-embedder.js';
 import { createTomeServer } from './mcp/server.js';
@@ -26,21 +27,36 @@ export function resolveDbPath(env: NodeJS.ProcessEnv): string {
   return join(dataDir, 'index.db');
 }
 
-async function main(): Promise<void> {
-  const dbPath = resolveDbPath(process.env);
+/**
+ * Builds the real, fully-wired server: resolves the db path, ensures
+ * its directory exists, and constructs a real `SqliteDocumentIndex` and
+ * `OllamaEmbedder` — everything short of binding a transport. Separated
+ * from `main` so this real wiring is directly testable (via an
+ * in-memory transport) without also having to bind `process.stdin`/
+ * `stdout` inside the test process.
+ */
+export async function buildServer(env: NodeJS.ProcessEnv): Promise<McpServer> {
+  const dbPath = resolveDbPath(env);
   await mkdir(dirname(dbPath), { recursive: true });
 
   const index = new SqliteDocumentIndex({ dbPath, embedder: new OllamaEmbedder() });
-  const server = createTomeServer(index);
+  return createTomeServer(index);
+}
+
+/** Logs and exits — the daemon's top-level fatal-error handler. */
+export function handleFatalError(err: unknown): void {
+  console.error(err);
+  process.exit(1);
+}
+
+async function main(): Promise<void> {
+  const server = await buildServer(process.env);
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
 // Only run when this file is the actual entry point — not when imported
-// (e.g. to test resolveDbPath) by another module.
+// (e.g. to test resolveDbPath/buildServer) by another module.
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
+  main().catch(handleFatalError);
 }

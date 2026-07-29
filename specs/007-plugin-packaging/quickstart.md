@@ -48,6 +48,10 @@ npm test
   troubleshooting guidance mentioning `claude --debug` — the documented
   workaround for SC-004, since Claude Code doesn't proactively surface
   an MCP server startup failure (research.md #6).
+- **FR-005 (corrected post-release)** — `plugin-config.test.ts`:
+  `.claude-plugin/marketplace.json` parses and declares this repo as
+  its own marketplace, listing the `tome` plugin with `source: "./"`
+  (research.md #5's Correction).
 
 Structural/content checks are the ceiling of what's automatable here —
 whether the real Claude Code harness actually runs the hook, injects the
@@ -55,6 +59,26 @@ variables, and starts the server correctly is a live-session concern,
 the same limitation milestone 006 accepted for its skill files.
 
 ## Manual smoke test (real Claude Code session)
+
+**Corrected post-release (research.md #5)**: `claude plugin install
+<git-url>` has no direct-install form — install always goes through a
+marketplace, even a self-hosted one. To actually prove FR-005/SC-001 —
+not just `--plugin-dir` session-scoped loading — run the real install
+flow:
+
+```bash
+claude plugin marketplace add fancy-bread/tome
+claude plugin install tome@fancy-bread/tome
+```
+
+(Or fully local, no GitHub: `claude plugin marketplace add
+/path/to/tome` then `claude plugin install tome@tome`.) Confirm the
+install succeeds and persists to a *new* session — `--plugin-dir`
+below only proves loading works, not that the marketplace-mediated
+install path itself works.
+
+For faster dev-loop iteration on the config files themselves,
+`--plugin-dir` remains useful and doesn't need a marketplace at all:
 
 ```bash
 claude --plugin-dir /path/to/tome

@@ -34,6 +34,14 @@ system stores or manipulates, but structure a test can validate.
 | `...command.async` | `true` | Yes (for this project) | Prevents blocking session startup on first run (research.md #2). |
 | `...command.statusMessage` | `string` | Optional | UX polish shown during the async run. |
 
+## `.claude-plugin/marketplace.json` (new, added post-release — research.md #5's Correction)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `name` | `string` | Yes | Marketplace ID, `"tome"`. |
+| `owner` | `{ name: string }` | Yes | Maintainer info. |
+| `plugins` | `Array<{ name: string; source: string \| object }>` | Yes | One entry: `{ "name": "tome", "source": "./" }` — `"./"` resolves relative to the marketplace root, correct here since this repo is both the plugin and its own marketplace listing. |
+
 ## `README.md`'s Troubleshooting section (new content, added post-planning)
 
 | Requirement | Notes |
