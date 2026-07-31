@@ -21,9 +21,18 @@ const DEFAULT_DATA_DIR = join(homedir(), '.claude', 'plugins', 'tome');
  * plugin harness has set that variable (milestone 007's `.mcp.json`
  * forwards it), else a fixed default so this daemon is runnable
  * standalone without the harness (per spec.md's Assumptions).
+ *
+ * Some hosts (observed: the VS Code extension) launch the MCP server
+ * without expanding `.mcp.json`'s `${CLAUDE_PLUGIN_DATA}` placeholder,
+ * so the env var arrives as that literal template string rather than
+ * being unset. Treat it the same as unset rather than mkdir'ing a
+ * `${CLAUDE_PLUGIN_DATA}` directory into whatever the cwd happens to be.
  */
 export function resolveDbPath(env: NodeJS.ProcessEnv): string {
-  const dataDir = env.CLAUDE_PLUGIN_DATA ?? DEFAULT_DATA_DIR;
+  const dataDir =
+    env.CLAUDE_PLUGIN_DATA && env.CLAUDE_PLUGIN_DATA !== '${CLAUDE_PLUGIN_DATA}'
+      ? env.CLAUDE_PLUGIN_DATA
+      : DEFAULT_DATA_DIR;
   return join(dataDir, 'index.db');
 }
 
