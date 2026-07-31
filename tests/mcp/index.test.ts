@@ -17,6 +17,12 @@ describe('resolveDbPath', () => {
   it('falls back to a fixed default when CLAUDE_PLUGIN_DATA is unset', () => {
     expect(resolveDbPath({})).toBe(join(homedir(), '.claude', 'plugins', 'tome', 'index.db'));
   });
+
+  it('falls back to a fixed default when CLAUDE_PLUGIN_DATA is an unexpanded placeholder', () => {
+    expect(resolveDbPath({ CLAUDE_PLUGIN_DATA: '${CLAUDE_PLUGIN_DATA}' })).toBe(
+      join(homedir(), '.claude', 'plugins', 'tome', 'index.db'),
+    );
+  });
 });
 
 describe('buildServer', () => {
