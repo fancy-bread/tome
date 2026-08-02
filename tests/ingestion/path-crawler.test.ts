@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -65,6 +65,28 @@ describe('DefaultCrawler — local path source (User Story 2)', () => {
     expect(result.documents).toEqual([]);
     expect(result.error).not.toBeNull();
   });
+
+  // chmod(0o000) doesn't block access for root, and permission bits behave
+  // differently on Windows — this is a distinct OS error class (EACCES)
+  // from the "does not exist" (ENOENT) case above, worth its own coverage
+  // wherever it can be exercised reliably.
+  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)(
+    'reports a clear error and produces zero Documents for a path it lacks permission to read (EACCES)',
+    async () => {
+      const restrictedDir = join(dir, 'restricted');
+      await mkdir(restrictedDir);
+      await writeFile(join(restrictedDir, 'secret.md'), '# Secret\n\nShould not be readable.');
+      await chmod(restrictedDir, 0o000);
+
+      try {
+        const result = await new DefaultCrawler().crawl({ type: 'path', origin: restrictedDir, sourceId: 'source-1' });
+        expect(result.documents).toEqual([]);
+        expect(result.error).not.toBeNull();
+      } finally {
+        await chmod(restrictedDir, 0o700);
+      }
+    },
+  );
 
   it('skips a single corrupt file and still returns Documents for everything else (SC-005)', async () => {
     const result = await new DefaultCrawler().crawl({ type: 'path', origin: dir, sourceId: 'source-1' });

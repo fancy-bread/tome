@@ -59,6 +59,17 @@ describe('DefaultCrawler — URL source (User Story 1)', () => {
     );
   });
 
+  it('extracts a page title from its <h1> (Turndown\'s default setext style must not defeat extractTitle)', async () => {
+    const result = await new DefaultCrawler().crawl({
+      type: 'url',
+      origin: `${baseUrl}/docs/`,
+      sourceId: 'source-1',
+    });
+
+    const home = result.documents.find((d) => d.document.uri === `${baseUrl}/docs/`);
+    expect(home?.document.title).toBe('Docs Home');
+  });
+
   it('never fetches or includes a page outside the starting origin/path prefix', async () => {
     const result = await new DefaultCrawler().crawl({
       type: 'url',
@@ -133,6 +144,29 @@ describe('DefaultCrawler — URL source (User Story 1)', () => {
 
     expect(result.documents).toEqual([]);
     expect(result.error).not.toBeNull();
+  });
+
+  it('reports a clear error instead of hanging when the starting URL never responds', async () => {
+    const stallingServer = createServer((_req, _res) => {
+      // Accepts the connection but intentionally never writes a response —
+      // distinct from connection-refused/404, which fail fast on their own.
+    });
+    await new Promise<void>((resolve) => stallingServer.listen(0, resolve));
+    const { port } = stallingServer.address() as AddressInfo;
+
+    try {
+      const result = await new DefaultCrawler().crawl({
+        type: 'url',
+        origin: `http://localhost:${port}/`,
+        sourceId: 'source-1',
+        bounds: { requestTimeoutMs: 200 },
+      });
+
+      expect(result.documents).toEqual([]);
+      expect(result.error).not.toBeNull();
+    } finally {
+      stallingServer.close();
+    }
   });
 
   it('skips a single broken link and still returns Documents for everything else that succeeded (SC-005)', async () => {

@@ -21,10 +21,19 @@ import { extractTitle } from './title.js';
 import { walkDirectory } from './walk-directory.js';
 
 export interface CrawlBounds {
-  /** Default 3. Depth 0 is the starting page; each hop adds 1. */
+  /** Default 3. Depth 0 is the starting page; each hop adds 1. Url only. */
   maxDepth: number;
-  /** Default 200. Total documents fetched across the whole crawl. */
+  /** Default 200. Total documents fetched across the whole crawl. Url only. */
   maxPageCount: number;
+  /**
+   * Default 30_000. Caps a single network operation — one page fetch
+   * (url) or the whole clone (git) — so an unresponsive host or a git
+   * remote silently waiting on credential input degrades to a
+   * source-level error instead of leaving the source stuck in
+   * `indexing` forever (Constitution Principle II). Not consulted for
+   * `path`, which never does network I/O.
+   */
+  requestTimeoutMs: number;
 }
 
 export interface CrawlInput {
@@ -36,7 +45,11 @@ export interface CrawlInput {
    * before crawling and passes its id here.
    */
   sourceId: string;
-  /** Only consulted when type === 'url'; ignored otherwise. */
+  /**
+   * maxDepth/maxPageCount are consulted only when type === 'url';
+   * requestTimeoutMs is consulted for 'url' and 'git' (both do network
+   * I/O); nothing here is consulted for 'path'.
+   */
   bounds?: Partial<CrawlBounds>;
 }
 
@@ -66,9 +79,12 @@ export interface Crawler {
   crawl(input: CrawlInput): Promise<CrawlResult>;
 }
 
-const DEFAULT_BOUNDS: CrawlBounds = { maxDepth: 3, maxPageCount: 200 };
+const DEFAULT_BOUNDS: CrawlBounds = { maxDepth: 3, maxPageCount: 200, requestTimeoutMs: 30_000 };
 
-const turndownService = new TurndownService();
+// atx (`#`/`##`/...) rather than Turndown's default setext style, so an
+// <h1>/<h2> converts to a line extractTitle's ATX-only regex can match —
+// see the title-extraction regression test in tests/ingestion/url-crawler.test.ts.
+const turndownService = new TurndownService({ headingStyle: 'atx' });
 
 interface QueueItem {
   url: URL;
@@ -77,13 +93,14 @@ interface QueueItem {
 
 export class DefaultCrawler implements Crawler {
   async crawl(input: CrawlInput): Promise<CrawlResult> {
+    const bounds = { ...DEFAULT_BOUNDS, ...input.bounds };
     switch (input.type) {
       case 'url':
-        return this.crawlUrl(input.origin, input.sourceId, { ...DEFAULT_BOUNDS, ...input.bounds });
+        return this.crawlUrl(input.origin, input.sourceId, bounds);
       case 'path':
         return this.crawlPath(input.origin, input.sourceId);
       case 'git':
-        return this.crawlGit(input.origin, input.sourceId);
+        return this.crawlGit(input.origin, input.sourceId, bounds.requestTimeoutMs);
     }
   }
 
@@ -110,7 +127,7 @@ export class DefaultCrawler implements Crawler {
 
       let html: string;
       try {
-        const response = await fetch(url.href);
+        const response = await fetch(url.href, { signal: AbortSignal.timeout(bounds.requestTimeoutMs) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         html = await response.text();
       } catch (err) {
@@ -173,7 +190,7 @@ export class DefaultCrawler implements Crawler {
     }
   }
 
-  private async crawlGit(origin: string, sourceId: string): Promise<CrawlResult> {
+  private async crawlGit(origin: string, sourceId: string, requestTimeoutMs: number): Promise<CrawlResult> {
     let workingTree = origin;
     let tempDir: string | null = null;
 
@@ -183,7 +200,11 @@ export class DefaultCrawler implements Crawler {
     if (this.isCloneableGitUrl(origin)) {
       try {
         tempDir = await mkdtemp(join(tmpdir(), 'tome-git-clone-'));
-        await simpleGit().clone(origin, tempDir);
+        // `block` kills the git child process if it goes this long with no
+        // stdout/stderr output — the case that matters most is an SSH
+        // remote silently waiting on a credential prompt, which otherwise
+        // hangs forever rather than failing (Constitution Principle II).
+        await simpleGit({ timeout: { block: requestTimeoutMs } }).clone(origin, tempDir);
         workingTree = tempDir;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);

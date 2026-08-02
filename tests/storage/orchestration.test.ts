@@ -66,6 +66,14 @@ describe('SqliteDocumentIndex orchestration (User Story 1)', () => {
     expect(await index.search('   ')).toEqual([]);
   });
 
+  it('returns an empty array rather than throwing for a zero or negative limit', async () => {
+    const added = await index.addSource({ type: 'path', origin: dir });
+    await waitForSettled(index, added.id);
+
+    await expect(index.search('installation', { limit: 0 })).resolves.toEqual([]);
+    await expect(index.search('installation', { limit: -1 })).resolves.toEqual([]);
+  });
+
   it('settles to error, without an unhandled rejection, when the source cannot be read (SC-005)', async () => {
     const added = await index.addSource({ type: 'path', origin: join(dir, 'does-not-exist') });
     const settled = await waitForSettled(index, added.id);
