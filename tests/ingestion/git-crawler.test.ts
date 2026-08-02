@@ -1,3 +1,4 @@
+import { createServer } from 'node:http';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -74,6 +75,30 @@ describe('DefaultCrawler — git source (User Story 3)', () => {
 
     expect(result.documents).toEqual([]);
     expect(result.error).not.toBeNull();
+  });
+
+  it('reports a clear error instead of hanging when the remote never responds (e.g. stalled on credentials)', async () => {
+    const stallingServer = createServer((_req, _res) => {
+      // Accepts the connection but intentionally never responds —
+      // simulates a remote silently waiting on a credential prompt
+      // rather than failing fast.
+    });
+    await new Promise<void>((resolve) => stallingServer.listen(0, resolve));
+    const { port } = (stallingServer.address() as { port: number }) ?? { port: 0 };
+
+    try {
+      const result = await new DefaultCrawler().crawl({
+        type: 'git',
+        origin: `http://localhost:${port}/repo.git`,
+        sourceId: 'source-1',
+        bounds: { requestTimeoutMs: 300 },
+      });
+
+      expect(result.documents).toEqual([]);
+      expect(result.error).not.toBeNull();
+    } finally {
+      stallingServer.close();
+    }
   });
 
   it('reports a clear error when a plain-path origin (no clone attempted) does not exist', async () => {
