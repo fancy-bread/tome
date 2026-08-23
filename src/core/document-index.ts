@@ -63,4 +63,12 @@ export interface DocumentIndex {
    * last-indexed timestamp (FR-009).
    */
   listSources(): Promise<Source[]>;
+
+  /**
+   * Deletes `id`'s Source and every Document/Chunk (and embedding) that
+   * belongs to it. Rejects with `NotFoundError` if no source matches
+   * `id` — the same typed-rejection convention `fetch()` uses, not a
+   * silent no-op (specs/008-remove-source/spec.md FR-004).
+   */
+  removeSource(id: string): Promise<void>;
 }

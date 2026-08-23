@@ -1,5 +1,6 @@
-// Builds the MCP server exposing DocumentIndex over the four tome_*
-// tools. See specs/004-mcp-server/spec.md and data-model.md.
+// Builds the MCP server exposing DocumentIndex over the tome_* tools.
+// See specs/004-mcp-server/spec.md and data-model.md for the original
+// four; specs/008-remove-source/spec.md for tome_remove_source.
 //
 // Takes DocumentIndex (the interface), never a concrete implementation
 // (Constitution Principle IV) — this is what lets tests substitute
@@ -13,6 +14,7 @@ import {
   TOME_ADD_SOURCE,
   TOME_FETCH,
   TOME_LIST_SOURCES,
+  TOME_REMOVE_SOURCE,
   TOME_SEARCH,
 } from './tool-descriptions.js';
 
@@ -109,6 +111,15 @@ export function createTomeServer(index: DocumentIndex): McpServer {
           error: s.error,
         })),
       });
+    }),
+  );
+
+  server.registerTool(
+    TOME_REMOVE_SOURCE.name,
+    { description: TOME_REMOVE_SOURCE.description, inputSchema: TOME_REMOVE_SOURCE.inputSchema },
+    withErrorHandling(async ({ id }: { id: string }) => {
+      await index.removeSource(id);
+      return jsonResult({ removed: true, sourceId: id });
     }),
   );
 

@@ -55,16 +55,59 @@ this codebase already relies on elsewhere.
   edge case being gold-plated, it's a documented `search()` crash path
   once traced through the existing code, not just stale-content risk.
 
+> **Correction (found during implementation, by actually forcing the
+> race with a deterministic gated embedder rather than trusting the
+> design on paper)**: the settle-and-recheck design above has a real
+> gap. It re-derives "this source's documents" via
+> `documents WHERE source_id = ?` — but if `removeSource`'s first delete
+> lands *after* a document row was already inserted but *before* that
+> document's chunks finish embedding (an `await embedder.embed()` per
+> chunk, inside the per-document loop, not just the one crawl-level
+> await this Decision originally reasoned about), the first delete
+> removes that document row. The job then resumes and inserts chunks
+> referencing that now-gone `document_id` — orphaned chunks the second
+> delete pass can no longer find, since it looks them up via a document
+> row that no longer exists.
+>
+> **Fix**: replaced settle-and-recheck with two independent layers,
+> neither of which needs to re-derive anything after the fact:
+> 1. `runIndexingJob` was restructured so each document's chunks are
+>    fully embedded *before* any write for that document — the only
+>    `await` per document now happens strictly before a single
+>    `getSourceById` check, which gates that document's entire write
+>    (its row plus every one of its chunks) as one synchronous block
+>    with no `await` in between check and writes. A document is written
+>    complete or not at all; there is no partial-write window left to
+>    orphan.
+> 2. `schema.ts` now asserts `PRAGMA foreign_keys = ON` explicitly
+>    (confirmed, via reading straight from a fresh connection, to
+>    already be `better-sqlite3`'s default — but asserted rather than
+>    left implicit, since a design leaning on it deserves to say so).
+>    This turned out to already be independently sufficient on its own:
+>    with layer 1 temporarily reverted, the deterministic test still
+>    passed, because any write referencing an already-deleted parent row
+>    throws a foreign-key violation that `runIndexingJob`'s existing
+>    outer `catch` already absorbs. Kept both layers rather than one —
+>    the explicit guard makes the intent legible in code without
+>    depending on a library default some future dependency bump could
+>    silently change, and it doesn't rely on an exception-based control
+>    flow path that was never designed with this race in mind.
+>
+> `removeSource` itself is back to a single `deleteSourceCascade` call —
+> the settle-and-recheck chain this Decision originally specified was
+> removed as unnecessary once `runIndexingJob` guards its own writes.
+
 ## Confirmed non-unknowns (reused patterns, no new research needed)
 
 - **Cascade-delete SQL shape**: identical in structure to
-  `deleteChunksForDocument` (milestone 003) — no `ON DELETE CASCADE` on
-  any foreign key (`better-sqlite3` doesn't enforce FKs unless a
-  `PRAGMA` is set, and this schema never sets one), so `chunk_vectors`
-  rows must be deleted explicitly by `rowid` before their `chunks` rows;
-  `chunk_text_fts` stays in sync automatically via the existing
-  `chunks_ad` trigger; `documents` and finally `sources` are deleted
-  last.
+  `deleteChunksForDocument` (milestone 003) — `chunk_vectors` rows must
+  still be deleted explicitly by `rowid` before their `chunks` rows (no
+  trigger keeps that table in sync); `chunk_text_fts` stays in sync
+  automatically via the existing `chunks_ad` trigger; `documents` and
+  finally `sources` are deleted last. (Corrected: the original note here
+  claimed FKs weren't enforced — see the Correction above; child-before-
+  parent ordering turned out to matter for a second reason once that was
+  fixed, not just for keeping `chunk_vectors` in sync.)
 - **Not-found error shape**: reuses `NotFoundError` (milestone 001,
   already thrown by `fetch()`) rather than introducing a second error
   type — `tome_remove_source`'s MCP handler needs no new error-mapping

@@ -76,4 +76,44 @@ describe('MCP server — end-to-end (SC-002)', () => {
     const { sources } = JSON.parse((listResult.content as Array<{ type: 'text'; text: string }>)[0].text);
     expect(sources).toContainEqual(expect.objectContaining({ id: sourceId, status: 'ready' }));
   });
+
+  it('removes a source through MCP, and its content is gone from both search and fetch afterward (008-remove-source)', async () => {
+    const client = await connectTestClient(index);
+
+    const addResult = await client.callTool({
+      name: 'tome_add_source',
+      arguments: { type: 'path', origin: dir },
+    });
+    const { sourceId } = JSON.parse((addResult.content as Array<{ type: 'text'; text: string }>)[0].text);
+    await waitUntilReady(index, sourceId);
+
+    const searchBefore = await client.callTool({ name: 'tome_search', arguments: { query: 'widgets' } });
+    const { results: resultsBefore } = JSON.parse(
+      (searchBefore.content as Array<{ type: 'text'; text: string }>)[0].text,
+    );
+    expect(resultsBefore.length).toBeGreaterThan(0);
+    const chunkId = resultsBefore[0].chunkId;
+
+    const fetchBefore = await client.callTool({ name: 'tome_fetch', arguments: { id: chunkId } });
+    expect(fetchBefore.isError).toBeFalsy();
+
+    const removeResult = await client.callTool({
+      name: 'tome_remove_source',
+      arguments: { id: sourceId },
+    });
+    expect(removeResult.isError).toBeFalsy();
+
+    const searchAfter = await client.callTool({ name: 'tome_search', arguments: { query: 'widgets' } });
+    const { results: resultsAfter } = JSON.parse(
+      (searchAfter.content as Array<{ type: 'text'; text: string }>)[0].text,
+    );
+    expect(resultsAfter).toEqual([]);
+
+    const fetchAfter = await client.callTool({ name: 'tome_fetch', arguments: { id: chunkId } });
+    expect(fetchAfter.isError).toBe(true);
+
+    const listResult = await client.callTool({ name: 'tome_list_sources', arguments: {} });
+    const { sources } = JSON.parse((listResult.content as Array<{ type: 'text'; text: string }>)[0].text);
+    expect(sources.find((s: { id: string }) => s.id === sourceId)).toBeUndefined();
+  });
 });

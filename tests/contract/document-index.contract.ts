@@ -153,6 +153,47 @@ export function runDocumentIndexContractTests(
       });
     });
 
+    describe('User Story 5 — Remove a Source', () => {
+      it('deletes the source so it no longer appears in listSources()', async () => {
+        const index = makeIndex(new FakeEmbedder());
+        const source = index.seedSource();
+
+        await index.removeSource(source.id);
+
+        const sources = await index.listSources();
+        expect(sources.find((s) => s.id === source.id)).toBeUndefined();
+      });
+
+      it('removes the source content from search results', async () => {
+        const index = makeIndex(new FakeEmbedder());
+        const source = index.seedSource();
+        const document = index.seedDocument(source.id);
+        index.seedChunk(document.id, { text: 'installation guide' });
+
+        await index.removeSource(source.id);
+
+        const results = await index.search('installation guide');
+        expect(results).toEqual([]);
+      });
+
+      it('makes a previously-fetchable document and chunk reject NotFoundError afterward', async () => {
+        const index = makeIndex(new FakeEmbedder());
+        const source = index.seedSource();
+        const document = index.seedDocument(source.id);
+        const chunk = index.seedChunk(document.id, { text: 'installation guide' });
+
+        await index.removeSource(source.id);
+
+        await expect(index.fetch(document.id)).rejects.toBeInstanceOf(NotFoundError);
+        await expect(index.fetch(chunk.id)).rejects.toBeInstanceOf(NotFoundError);
+      });
+
+      it('rejects with NotFoundError when removing an id that never existed', async () => {
+        const index = makeIndex(new FakeEmbedder());
+        await expect(index.removeSource('does-not-exist')).rejects.toBeInstanceOf(NotFoundError);
+      });
+    });
+
     describe('Edge Cases', () => {
       it('a second addSource call for an already-indexed origin refreshes it rather than starting a concurrent second refresh', async () => {
         const index = makeIndex(new FakeEmbedder());

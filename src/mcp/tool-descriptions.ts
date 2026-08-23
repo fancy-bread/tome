@@ -10,6 +10,12 @@
 // agent to call these tools unprompted, mid-task. Changing them requires
 // the same review rigor as changing inputSchema, per the constitution's
 // Development Workflow section.
+//
+// tome_remove_source's description is Principle III applied in reverse:
+// deciding what to stop indexing is a human call (VISION.md), so this
+// text is written to discourage unprompted invocation, not drive it.
+// See specs/008-remove-source/spec.md FR-005 and plan.md's Constitution
+// Check.
 
 import { z } from 'zod';
 
@@ -52,5 +58,17 @@ export const TOME_ADD_SOURCE = {
   inputSchema: {
     type: z.enum(['url', 'path', 'git']),
     origin: z.string(),
+  },
+};
+
+export const TOME_REMOVE_SOURCE = {
+  name: 'tome_remove_source',
+  description:
+    'Remove a previously indexed source and delete everything indexed under it ' +
+    '(its documents, chunks, and embeddings). This is a deliberate, irreversible ' +
+    'action — only call this when the user has explicitly asked to remove a ' +
+    'specific source, never on your own initiative.',
+  inputSchema: {
+    id: z.string(),
   },
 };

@@ -62,5 +62,13 @@ END;
 
 export function applySchema(db: Database.Database): void {
   sqliteVec.load(db);
+  // better-sqlite3 enables this by default, but it's asserted explicitly
+  // here rather than left as an implicit library default: `removeSource`
+  // (specs/008-remove-source/) leans on FK enforcement rejecting any
+  // `documents`/`chunks` write whose parent row was already deleted, as
+  // a second, independent layer behind SqliteDocumentIndex's own
+  // explicit in-flight-job guards — both should hold regardless of
+  // what a future dependency bump's default turns out to be.
+  db.pragma('foreign_keys = ON');
   db.exec(SCHEMA_SQL);
 }

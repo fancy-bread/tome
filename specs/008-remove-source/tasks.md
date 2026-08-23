@@ -46,8 +46,8 @@ Proceeds directly to Foundational.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T001 [P] Add `removeSource(id: string): Promise<void>` to the `DocumentIndex` interface in `src/core/document-index.ts`, documented to reject with the existing `NotFoundError` for an unknown id (data-model.md)
-- [ ] T002 [P] Implement `removeSource` on `InMemoryDocumentIndex` in `tests/contract/in-memory-document-index.ts`: delete the matching entries from its `sources`/`originToId`/`documents`/`chunks` maps; reject `NotFoundError` if `id` isn't in `sources` (depends on T001)
+- [X] T001 [P] Add `removeSource(id: string): Promise<void>` to the `DocumentIndex` interface in `src/core/document-index.ts`, documented to reject with the existing `NotFoundError` for an unknown id (data-model.md)
+- [X] T002 [P] Implement `removeSource` on `InMemoryDocumentIndex` in `tests/contract/in-memory-document-index.ts`: delete the matching entries from its `sources`/`originToId`/`documents`/`chunks` maps; reject `NotFoundError` if `id` isn't in `sources` (depends on T001)
 
 **Checkpoint**: The interface and its in-memory implementation exist — contract tests and user story implementation can now begin
 
@@ -61,15 +61,15 @@ Proceeds directly to Foundational.
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Implement `SqliteDocumentIndex.removeSource(id)` in `src/storage/sqlite-document-index.ts`: look up the source (reject `NotFoundError` if missing), then cascade-delete per data-model.md steps 1-5 — each of the source's documents' chunks' `chunk_vectors` rows by `rowid`, then those `chunks` rows (`chunk_text_fts` stays in sync via the existing `chunks_ad` trigger), then the `documents` rows, then the `sources` row (depends on T001)
-- [ ] T004 [P] [US1] Add `TOME_REMOVE_SOURCE` to `src/mcp/tool-descriptions.ts` per `contracts/tools.ts` — including the deliberately-discouraging description text (Constitution Principle III applied in reverse for a destructive tool) (depends on T001)
-- [ ] T005 [P] [US1] Add a test to `tests/mcp/server.test.ts` asserting `TOME_REMOVE_SOURCE.description` discourages unprompted/autonomous invocation — mirrors the existing `'describes tome_search as something to call proactively...'` test (Constitution Principle III), but for the inverted claim this feature's plan.md makes (depends on T004)
-- [ ] T006 [US1] Register the `tome_remove_source` handler in `src/mcp/server.ts`: call `index.removeSource(id)`, return a success result; wrapped in the existing `withErrorHandling` (no new error-mapping needed — `NotFoundError` already becomes `isError: true`) (depends on T003, T004)
-- [ ] T007 [P] [US1] Create `skills/remove/SKILL.md` for `/tome:remove`, mirroring `skills/add/SKILL.md`'s human-gated shape (`disable-model-invocation: true`): parse `$ARGUMENTS` for a source id, ask for clarification rather than guessing if it's missing, call `tome_remove_source`, report the result in plain language, surface a failed call readably. No blocking dependency — the tool's name and shape are already fixed by `contracts/tools.ts`, so this can be written alongside T003–T006
-- [ ] T008 [P] [US1] Add success-path `removeSource` cases to the shared `tests/contract/document-index.contract.ts` suite (runs against both `InMemoryDocumentIndex` and `SqliteDocumentIndex`, per the FR-016/SC-003 pattern): removing a source deletes it from `listSources()`; a `search()` query that previously matched its content returns nothing from it afterward; a previously-fetchable chunk/document id rejects `NotFoundError` via `fetch()` afterward (depends on T002, T003)
-- [ ] T009 [US1] Add a `tome_remove_source` success-path test to `tests/mcp/end-to-end.test.ts`: add a source, wait for it to index, `tome_search` for known content, `tome_fetch` one of the resulting chunk ids to confirm it resolves, `tome_remove_source` it, then repeat both the same `tome_search` (confirm nothing from it appears) and the same `tome_fetch` call (confirm `isError: true`) — proving removal at the MCP protocol layer for both read paths, not just `search()` (depends on T006)
-- [ ] T010 [P] [US1] Add a `describe('skills/remove/SKILL.md', ...)` block to `tests/skills/skill-files.test.ts`, mirroring the `add`/`sources`/`search` blocks: correct frontmatter, targets `tome_remove_source`, instructs asking for clarification on a missing argument, instructs surfacing a failed call readably (depends on T007)
-- [ ] T011 [US1] Update `tests/plugin/plugin-config.test.ts`'s expected skill directory list from `['add', 'sources', 'search']` to include `'remove'` (depends on T007)
+- [X] T003 [US1] Implement `SqliteDocumentIndex.removeSource(id)` in `src/storage/sqlite-document-index.ts`: look up the source (reject `NotFoundError` if missing), then cascade-delete per data-model.md steps 1-5 — each of the source's documents' chunks' `chunk_vectors` rows by `rowid`, then those `chunks` rows (`chunk_text_fts` stays in sync via the existing `chunks_ad` trigger), then the `documents` rows, then the `sources` row (depends on T001)
+- [X] T004 [P] [US1] Add `TOME_REMOVE_SOURCE` to `src/mcp/tool-descriptions.ts` per `contracts/tools.ts` — including the deliberately-discouraging description text (Constitution Principle III applied in reverse for a destructive tool) (depends on T001)
+- [X] T005 [P] [US1] Add a test to `tests/mcp/server.test.ts` asserting `TOME_REMOVE_SOURCE.description` discourages unprompted/autonomous invocation — mirrors the existing `'describes tome_search as something to call proactively...'` test (Constitution Principle III), but for the inverted claim this feature's plan.md makes (depends on T004)
+- [X] T006 [US1] Register the `tome_remove_source` handler in `src/mcp/server.ts`: call `index.removeSource(id)`, return a success result; wrapped in the existing `withErrorHandling` (no new error-mapping needed — `NotFoundError` already becomes `isError: true`) (depends on T003, T004)
+- [X] T007 [P] [US1] Create `skills/remove/SKILL.md` for `/tome:remove`, mirroring `skills/add/SKILL.md`'s human-gated shape (`disable-model-invocation: true`): parse `$ARGUMENTS` for a source id, ask for clarification rather than guessing if it's missing, call `tome_remove_source`, report the result in plain language, surface a failed call readably. No blocking dependency — the tool's name and shape are already fixed by `contracts/tools.ts`, so this can be written alongside T003–T006
+- [X] T008 [P] [US1] Add success-path `removeSource` cases to the shared `tests/contract/document-index.contract.ts` suite (runs against both `InMemoryDocumentIndex` and `SqliteDocumentIndex`, per the FR-016/SC-003 pattern): removing a source deletes it from `listSources()`; a `search()` query that previously matched its content returns nothing from it afterward; a previously-fetchable chunk/document id rejects `NotFoundError` via `fetch()` afterward (depends on T002, T003)
+- [X] T009 [US1] Add a `tome_remove_source` success-path test to `tests/mcp/end-to-end.test.ts`: add a source, wait for it to index, `tome_search` for known content, `tome_fetch` one of the resulting chunk ids to confirm it resolves, `tome_remove_source` it, then repeat both the same `tome_search` (confirm nothing from it appears) and the same `tome_fetch` call (confirm `isError: true`) — proving removal at the MCP protocol layer for both read paths, not just `search()` (depends on T006)
+- [X] T010 [P] [US1] Add a `describe('skills/remove/SKILL.md', ...)` block to `tests/skills/skill-files.test.ts`, mirroring the `add`/`sources`/`search` blocks: correct frontmatter, targets `tome_remove_source`, instructs asking for clarification on a missing argument, instructs surfacing a failed call readably (depends on T007)
+- [X] T011 [US1] Update `tests/plugin/plugin-config.test.ts`'s expected skill directory list from `['add', 'sources', 'search']` to include `'remove'` (depends on T007)
 
 **Checkpoint**: Removing a source works end-to-end through MCP and the skill command — User Story 1 is independently functional and deployable as the MVP
 
@@ -83,8 +83,8 @@ Proceeds directly to Foundational.
 
 ### Implementation for User Story 2
 
-- [ ] T012 [P] [US2] Add the not-found case to the shared contract suite (`tests/contract/document-index.contract.ts`): `removeSource` with an unknown id rejects `NotFoundError`, for both implementations (depends on T008)
-- [ ] T013 [P] [US2] Add a `tome_remove_source` not-found test to `tests/mcp/server.test.ts`: an unknown id returns `isError: true` with a specific message, and the server remains responsive to a later call afterward — mirrors the existing `tome_fetch` unknown-id test (depends on T009). Touches a different file than T012 — the two can run in parallel
+- [X] T012 [P] [US2] Add the not-found case to the shared contract suite (`tests/contract/document-index.contract.ts`): `removeSource` with an unknown id rejects `NotFoundError`, for both implementations (depends on T008)
+- [X] T013 [P] [US2] Add a `tome_remove_source` not-found test to `tests/mcp/server.test.ts`: an unknown id returns `isError: true` with a specific message, and the server remains responsive to a later call afterward — mirrors the existing `tome_fetch` unknown-id test (depends on T009). Touches a different file than T012 — the two can run in parallel
 
 **Checkpoint**: Nonexistent-id removal is proven safe and clearly reported — User Story 2 is independently verified without needing User Story 3
 
@@ -98,9 +98,9 @@ Proceeds directly to Foundational.
 
 ### Implementation for User Story 3
 
-- [ ] T014 [US3] Extend `SqliteDocumentIndex.removeSource` with the in-flight-job settle-and-recheck logic from research.md's Decision: after the initial cascade-delete, if `inFlightJobs` has a job running for `id`, chain a second cascade-delete onto that job's promise so it resolves once the job settles — closing the race where `runIndexingJob` could otherwise write orphaned `documents`/`chunks` rows after the source row is gone (depends on T003)
-- [ ] T015 [US3] Add the in-flight-job race test to new file `tests/storage/remove-source.test.ts` (`SqliteDocumentIndex` only — `InMemoryDocumentIndex` has no background job to race against): add a source, call `removeSource(id)` before its background job settles, wait for the job to finish, assert `listSources()` never shows `id` again and `search()` never surfaces any of its content (depends on T014)
-- [ ] T016 [P] [US3] Add the cross-source non-interference case to `tests/storage/remove-source.test.ts`: with two sources indexed, removing one leaves the other's `listSources()`/`search()`/`fetch()` results completely unchanged (SC-004/FR-007) (depends on T014)
+- [X] T014 [US3] Extend `SqliteDocumentIndex.removeSource` with the in-flight-job settle-and-recheck logic from research.md's Decision: after the initial cascade-delete, if `inFlightJobs` has a job running for `id`, chain a second cascade-delete onto that job's promise so it resolves once the job settles — closing the race where `runIndexingJob` could otherwise write orphaned `documents`/`chunks` rows after the source row is gone (depends on T003)
+- [X] T015 [US3] Add the in-flight-job race test to new file `tests/storage/remove-source.test.ts` (`SqliteDocumentIndex` only — `InMemoryDocumentIndex` has no background job to race against): add a source, call `removeSource(id)` before its background job settles, wait for the job to finish, assert `listSources()` never shows `id` again and `search()` never surfaces any of its content (depends on T014)
+- [X] T016 [P] [US3] Add the cross-source non-interference case to `tests/storage/remove-source.test.ts`: with two sources indexed, removing one leaves the other's `listSources()`/`search()`/`fetch()` results completely unchanged (SC-004/FR-007) (depends on T014)
 
 **Checkpoint**: All three user stories are independently functional — the `search()` crash risk research.md identified is closed and proven closed by a real test, not just design intent
 
@@ -108,8 +108,8 @@ Proceeds directly to Foundational.
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T017 Run `specs/008-remove-source/quickstart.md`'s manual/exploratory check against the real installed plugin — mirrors the 2026-08-01/2026-08-02 battle-testing sessions: `tome_add_source`, `tome_search` for known content, `tome_fetch` a result, `tome_remove_source`, repeat both the `tome_search` (confirm nothing appears) and the `tome_fetch` call (confirm `isError: true`)
-- [ ] T018 [P] Run the full `npm test` suite; confirm zero regressions in the other four MCP tools, the three existing skills, and all prior storage/ingestion tests
+- [X] T017 Run `specs/008-remove-source/quickstart.md`'s manual/exploratory check against the real installed plugin — mirrors the 2026-08-01/2026-08-02 battle-testing sessions: `tome_add_source`, `tome_search` for known content, `tome_fetch` a result, `tome_remove_source`, repeat both the `tome_search` (confirm nothing appears) and the `tome_fetch` call (confirm `isError: true`)
+- [X] T018 [P] Run the full `npm test` suite; confirm zero regressions in the other four MCP tools, the three existing skills, and all prior storage/ingestion tests
 
 ---
 

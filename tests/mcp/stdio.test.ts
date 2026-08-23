@@ -33,7 +33,9 @@ describe('MCP server — stdio transport', () => {
       await client.connect(transport);
       const tools = await client.listTools();
       const names = tools.tools.map((t) => t.name).sort();
-      expect(names).toEqual(['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_search'].sort());
+      expect(names).toEqual(
+        ['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_remove_source', 'tome_search'].sort(),
+      );
     } finally {
       await client.close();
     }
