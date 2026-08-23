@@ -85,6 +85,11 @@ const DEFAULT_BOUNDS: CrawlBounds = { maxDepth: 3, maxPageCount: 200, requestTim
 // <h1>/<h2> converts to a line extractTitle's ATX-only regex can match —
 // see the title-extraction regression test in tests/ingestion/url-crawler.test.ts.
 const turndownService = new TurndownService({ headingStyle: 'atx' });
+// Turndown's script/style removal is opt-in — without this, a hydration
+// payload embedded in a <script> tag (e.g. Next.js's self.__next_f.push
+// blobs) gets converted to text as one unbroken block, which the chunker
+// then can't split, producing a single oversized chunk per page.
+turndownService.remove(['script', 'style']);
 
 interface QueueItem {
   url: URL;
