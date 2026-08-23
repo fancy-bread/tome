@@ -5,6 +5,7 @@ import {
   TOME_ADD_SOURCE,
   TOME_FETCH,
   TOME_LIST_SOURCES,
+  TOME_REMOVE_SOURCE,
   TOME_SEARCH,
 } from '../../src/mcp/tool-descriptions.js';
 
@@ -112,16 +113,18 @@ describe('hooks/hooks.json', () => {
 });
 
 describe('FR-002/SC-001 proxy: every ingredient exists, independent of a live session', () => {
-  it('declares exactly the four expected MCP tools, correctly named', () => {
-    const names = [TOME_SEARCH, TOME_FETCH, TOME_LIST_SOURCES, TOME_ADD_SOURCE].map((t) => t.name);
+  it('declares exactly the five expected MCP tools, correctly named', () => {
+    const names = [TOME_SEARCH, TOME_FETCH, TOME_LIST_SOURCES, TOME_ADD_SOURCE, TOME_REMOVE_SOURCE].map(
+      (t) => t.name,
+    );
     expect(names.sort()).toEqual(
-      ['tome_search', 'tome_fetch', 'tome_list_sources', 'tome_add_source'].sort(),
+      ['tome_search', 'tome_fetch', 'tome_list_sources', 'tome_add_source', 'tome_remove_source'].sort(),
     );
   });
 
-  it('declares exactly three skill directories, correctly named', () => {
+  it('declares exactly four skill directories, correctly named', () => {
     const skillDirs = readdirSync(join(REPO_ROOT, 'skills'));
-    expect(skillDirs.sort()).toEqual(['add', 'sources', 'search'].sort());
+    expect(skillDirs.sort()).toEqual(['add', 'sources', 'search', 'remove'].sort());
   });
 });
 

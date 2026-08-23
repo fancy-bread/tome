@@ -115,6 +115,22 @@ export class InMemoryDocumentIndex implements TestableDocumentIndex {
     return [...this.sources.values()];
   }
 
+  async removeSource(id: string): Promise<void> {
+    const source = this.sources.get(id);
+    if (!source) throw new NotFoundError(id);
+
+    for (const [documentId, document] of this.documents) {
+      if (document.sourceId !== id) continue;
+      for (const [chunkId, chunk] of this.chunks) {
+        if (chunk.documentId === documentId) this.chunks.delete(chunkId);
+      }
+      this.documents.delete(documentId);
+    }
+
+    this.sources.delete(id);
+    this.originToId.delete(source.origin);
+  }
+
   // --- Test-only seeding helpers (filled in by T012, T016) ---
 
   seedSource(overrides: Partial<Source> = {}): Source {

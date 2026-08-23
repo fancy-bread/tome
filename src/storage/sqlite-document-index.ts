@@ -339,6 +339,17 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
    * (Constitution Principle II) rather than propagating as an unhandled
    * rejection, since nothing awaits this promise directly (addSource
    * fires it without awaiting, per FR-002).
+   *
+   * Guarded against `removeSource` (specs/008-remove-source/research.md):
+   * per document, every `embed()` call (the only `await` point per
+   * document) happens *before* any of that document's writes — a single
+   * `getSourceById` check gates the whole synchronous write block (its
+   * document row plus every one of its chunk rows) that follows. Since
+   * nothing else runs on this single-threaded process between that
+   * check and the writes it gates, a document is either written
+   * complete or not written at all — there is no window for a partial,
+   * orphaned row to land after `removeSource` has already deleted
+   * everything, and nothing here can resurrect a removed source.
    */
   private async runIndexingJob(source: Source): Promise<void> {
     try {
@@ -347,6 +358,8 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
         origin: source.origin,
         sourceId: source.id,
       });
+
+      if (!this.getSourceById(source.id)) return; // removed while crawling
 
       if (crawlResult.error) {
         this.db
@@ -362,6 +375,14 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
           continue; // unchanged since last index — skip entirely (FR-013)
         }
 
+        const documentId = existing?.id ?? crawled.document.id;
+        const chunks = this.chunker.chunk(documentId, crawled.text);
+        for (const chunk of chunks) {
+          chunk.embedding = await this.embedder.embed(chunk.text);
+        }
+
+        if (!this.getSourceById(source.id)) return; // removed during this document's embedding
+
         if (existing) {
           // Changed — same Document.id, refreshed metadata, replaced chunks (FR-014).
           this.db
@@ -373,10 +394,6 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
               existing.id,
             );
           this.deleteChunksForDocument(existing.id);
-          for (const chunk of this.chunker.chunk(existing.id, crawled.text)) {
-            chunk.embedding = await this.embedder.embed(chunk.text);
-            this.insertChunk(chunk);
-          }
         } else {
           // New — insert as-is using the id the crawler generated for it.
           this.db
@@ -391,10 +408,9 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
               crawled.document.contentHash,
               crawled.document.fetchedAt,
             );
-          for (const chunk of this.chunker.chunk(crawled.document.id, crawled.text)) {
-            chunk.embedding = await this.embedder.embed(chunk.text);
-            this.insertChunk(chunk);
-          }
+        }
+        for (const chunk of chunks) {
+          this.insertChunk(chunk);
         }
       }
 
@@ -504,5 +520,37 @@ export class SqliteDocumentIndex implements TestableDocumentIndex {
   async listSources(): Promise<Source[]> {
     const rows = this.db.prepare('SELECT * FROM sources').all() as SourceRow[];
     return rows.map(sourceFromRow);
+  }
+
+  /**
+   * Cascade-deletes every row belonging to `sourceId`: each document's
+   * chunks (and their `chunk_vectors` rows, via `deleteChunksForDocument`
+   * — `chunk_text_fts` stays in sync automatically via the existing
+   * trigger), then the `documents` rows, then the `sources` row itself.
+   */
+  private deleteSourceCascade(sourceId: string): void {
+    const documentIds = this.db
+      .prepare('SELECT id FROM documents WHERE source_id = ?')
+      .all(sourceId) as Array<{ id: string }>;
+    for (const { id: documentId } of documentIds) {
+      this.deleteChunksForDocument(documentId);
+    }
+    this.db.prepare('DELETE FROM documents WHERE source_id = ?').run(sourceId);
+    this.db.prepare('DELETE FROM sources WHERE id = ?').run(sourceId);
+  }
+
+  /**
+   * A background indexing job still in flight for `id` (if any) is
+   * guarded against this delete on its own side — `runIndexingJob`
+   * re-checks `getSourceById` immediately before every write, with no
+   * `await` in between check and write (specs/008-remove-source/
+   * research.md's Decision) — so a single delete here, with nothing
+   * further to coordinate, is enough: that job will stop writing the
+   * instant this has run, never resurrect the source, and never leave
+   * a partial/orphaned row behind.
+   */
+  async removeSource(id: string): Promise<void> {
+    if (!this.getSourceById(id)) throw new NotFoundError(id);
+    this.deleteSourceCascade(id);
   }
 }

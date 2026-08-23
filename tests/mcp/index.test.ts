@@ -42,14 +42,14 @@ describe('buildServer', () => {
 
     // Prove it's a real, working server — connect over an in-memory
     // transport (same pattern as tests/mcp/test-client.ts) and confirm
-    // all four tools are discoverable, without binding process.stdin/stdout.
+    // all five tools are discoverable, without binding process.stdin/stdout.
     const [serverTransport, clientTransport] = InMemoryTransport.createLinkedPair();
     const client = new Client({ name: 'index-test-client', version: '0.0.1' });
     await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
 
     const tools = await client.listTools();
     expect(tools.tools.map((t) => t.name).sort()).toEqual(
-      ['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_search'].sort(),
+      ['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_remove_source', 'tome_search'].sort(),
     );
   });
 });

@@ -77,3 +77,26 @@ describe('skills/search/SKILL.md', () => {
     expect(body.toLowerCase()).toContain('fail');
   });
 });
+
+describe('skills/remove/SKILL.md', () => {
+  const { frontmatter, body } = parseSkillFile(join(SKILLS_DIR, 'remove', 'SKILL.md'));
+
+  it('has correct frontmatter', () => {
+    expect(frontmatter.name).toBe('remove');
+    expect(frontmatter.description).toBeTruthy();
+    expect(frontmatter['disable-model-invocation']).toBe('true');
+  });
+
+  it('contains the arguments placeholder and targets tome_remove_source', () => {
+    expect(body).toContain('$ARGUMENTS');
+    expect(body).toContain('tome_remove_source');
+  });
+
+  it('instructs asking for clarification on a missing argument', () => {
+    expect(body).toMatch(/ask.*clarify|clarify.*ask/is);
+  });
+
+  it('instructs surfacing a failed tool call readably', () => {
+    expect(body.toLowerCase()).toContain('fail');
+  });
+});

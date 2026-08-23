@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { DocumentIndex } from '../../src/core/document-index.js';
 import { InMemoryDocumentIndex } from '../contract/in-memory-document-index.js';
-import { TOME_FETCH, TOME_SEARCH } from '../../src/mcp/tool-descriptions.js';
+import { TOME_FETCH, TOME_REMOVE_SOURCE, TOME_SEARCH } from '../../src/mcp/tool-descriptions.js';
 import { connectTestClient } from './test-client.js';
 
 /** Delegates everything to a real InMemoryDocumentIndex except search(),
@@ -12,18 +12,21 @@ class ThrowingSearchIndex implements DocumentIndex {
   addSource: DocumentIndex['addSource'] = (input) => this.delegate.addSource(input);
   fetch: DocumentIndex['fetch'] = (id) => this.delegate.fetch(id);
   listSources: DocumentIndex['listSources'] = () => this.delegate.listSources();
+  removeSource: DocumentIndex['removeSource'] = (id) => this.delegate.removeSource(id);
   async search(): Promise<never> {
     throw new Error('search backend unavailable');
   }
 }
 
 describe('MCP server — User Story 1: Start the Daemon and Discover Its Tools', () => {
-  it('advertises all four tools with names, descriptions, and input schemas', async () => {
+  it('advertises all five tools with names, descriptions, and input schemas', async () => {
     const client = await connectTestClient(new InMemoryDocumentIndex());
     const tools = await client.listTools();
 
     const names = tools.tools.map((t) => t.name).sort();
-    expect(names).toEqual(['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_search'].sort());
+    expect(names).toEqual(
+      ['tome_add_source', 'tome_fetch', 'tome_list_sources', 'tome_remove_source', 'tome_search'].sort(),
+    );
 
     for (const tool of tools.tools) {
       expect(tool.description).toBeTruthy();
@@ -216,6 +219,22 @@ describe('MCP server — User Story 5: List Sources via MCP', () => {
     expect(byId[ready.id]).toMatchObject({ status: 'ready', lastIndexedAt: 12345 });
     expect(byId[pending.id]).toMatchObject({ status: 'pending' });
     expect(byId[errored.id]).toMatchObject({ status: 'error', error: 'fetch failed' });
+  });
+});
+
+describe('MCP server — User Story: Remove a Source via MCP (Constitution Principle III, inverted)', () => {
+  it('describes tome_remove_source as a deliberate action to take only when explicitly asked, not something to call on its own initiative', () => {
+    expect(TOME_REMOVE_SOURCE.description).toMatch(/explicitly asked/i);
+    expect(TOME_REMOVE_SOURCE.description).toMatch(/never.*own initiative|not.*own initiative/i);
+  });
+
+  it('returns isError: true for an unknown source id, and the server remains responsive afterward', async () => {
+    const client = await connectTestClient(new InMemoryDocumentIndex());
+    const result = await client.callTool({ name: 'tome_remove_source', arguments: { id: 'does-not-exist' } });
+    expect(result.isError).toBe(true);
+
+    const tools = await client.listTools();
+    expect(tools.tools.length).toBeGreaterThan(0);
   });
 });
 

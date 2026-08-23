@@ -5,10 +5,11 @@ MCP-compatible agent tool). Point it at a URL, a local path, or a git repo;
 it crawls, chunks, embeds, and makes the content queryable — the equivalent
 of Cursor's `@Docs` indexing, but not tied to one editor.
 
-**Status: pre-release (v0.1.1).** All v1-scoped functionality is
+**Status: pre-release (v0.2.0).** All v1-scoped functionality is
 implemented — core interfaces, the ingestion pipeline, the SQLite-backed
 index, the MCP server, local embedding, the human-facing skill commands,
-and Claude Code plugin packaging — but it hasn't yet had real-world
+and Claude Code plugin packaging — plus the v1.1 fast-follow that lets
+you remove a source, not just add one. It hasn't yet had real-world
 install/usage validation, so treat it as pre-release rather than a
 stable 1.0.
 
@@ -19,7 +20,7 @@ for and how ambiguous design calls get resolved.
 
 - **Sources** — index a URL (bounded crawl), a local directory of
   Markdown/text/PDF, or a git repo.
-- **MCP server** exposing four tools:
+- **MCP server** exposing five tools:
 
   | Tool | Description |
   |------|-------------|
@@ -27,16 +28,20 @@ for and how ambiguous design calls get resolved.
   | `tome_fetch` | Retrieve a full chunk or document by ID |
   | `tome_list_sources` | List all indexed sources and their status |
   | `tome_add_source` | Index a new source (URL, path, or git repo) |
+  | `tome_remove_source` | Remove an indexed source and everything under it (documents, chunks, embeddings) |
 
   `tome_search` and `tome_fetch` are meant to be called autonomously by the
   agent mid-task, the same way it reaches for `Read` or `Grep` — no slash
-  command required.
+  command required. `tome_remove_source` is the opposite: deciding what to
+  stop indexing is a deliberate human call, so its description is written
+  to discourage the agent from calling it on its own initiative.
 
 - **Skill commands** for the explicitly human-driven actions:
 
   | Command | Action |
   |---------|--------|
   | `/tome:add` | Index a new URL, path, or repo |
+  | `/tome:remove` | Remove a previously indexed source |
   | `/tome:sources` | List what's currently indexed |
   | `/tome:search` | Manually query the index (optional override) |
 
@@ -49,7 +54,7 @@ for and how ambiguous design calls get resolved.
 ## How it works
 
 ```
-tome-*.md (skill files)              ← /tome:search, /tome:add, /tome:sources
+tome-*.md (skill files)              ← /tome:search, /tome:add, /tome:remove, /tome:sources
         ↓ bundled alongside the MCP server (.claude-plugin/plugin.json, .mcp.json)
 Tome MCP Server (TypeScript, local daemon, stdio)
   ├── Crawler (URL / local path / git repo → raw documents)
