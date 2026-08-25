@@ -1,5 +1,5 @@
 {
-  "name": "tome",
+  "name": "fancy-bread",
   "description": "Local-first documentation indexing for Claude Code",
   "owner": { "name": "Fancy Bread" },
   "plugins": [{ "name": "tome", "source": "./" }]
