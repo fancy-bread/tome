@@ -20,7 +20,7 @@ const EXPECTED = {
   mcpArgsPlaceholder: '${CLAUDE_PLUGIN_ROOT}/dist/index.js',
   dataDirEnvVar: 'CLAUDE_PLUGIN_DATA',
   dataDirEnvPlaceholder: '${CLAUDE_PLUGIN_DATA}',
-  marketplaceName: 'tome',
+  marketplaceName: 'fancy-bread',
   marketplacePluginSource: './',
 } as const;
 
